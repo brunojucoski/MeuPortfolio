@@ -4,7 +4,6 @@
 
 namespace Database\Seeders;
 use Database\Seeders\tipo_usuario;
-use Database\Seeders\sexo_usuario;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -16,7 +15,6 @@ public function run(): void
 {
     $this->call([
         tipo_usuario::class,
-        sexo_usuario::class,
     ]);
 }
     

@@ -12,6 +12,7 @@ class PerguntaPropostaContrato extends Model
 
     protected $fillable = [
         'id_portfolio_artista',
+        'id_categoria_orcamento',
         'tipo',
         'titulo',
         'opcoes_json',
@@ -31,6 +32,11 @@ class PerguntaPropostaContrato extends Model
     public function respostas(): HasMany
     {
         return $this->hasMany(RespostaPropostaPergunta::class, 'id_pergunta');
+    }
+
+    public function categoriaOrcamento(): BelongsTo
+    {
+        return $this->belongsTo(CategoriaOrcamento::class, 'id_categoria_orcamento');
     }
 
     public function opcoesList(): array

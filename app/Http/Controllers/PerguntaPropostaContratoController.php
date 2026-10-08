@@ -6,6 +6,7 @@ use App\Models\PerguntaPropostaContrato;
 use App\Models\RespostaPropostaPergunta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class PerguntaPropostaContratoController extends Controller
 {
@@ -25,15 +26,16 @@ class PerguntaPropostaContratoController extends Controller
             return redirect()->route('perfil')->with('error', 'Crie seu portfólio antes de configurar o formulário de orçamento.');
         }
 
-        $perguntas = $portfolio->perguntasPropostaContrato()->get();
+        $categoriasOrcamento = $portfolio->categoriasOrcamento()->with('perguntas')->get();
 
-        return view('propostas.perguntas_proposta', compact('portfolio', 'perguntas'));
+        return view('propostas.perguntas_proposta', compact('portfolio', 'categoriasOrcamento'));
     }
 
     public function store(Request $request)
     {
         $portfolio = $this->portfolioAutorizado();
         $rules = [
+            'id_categoria_orcamento' => ['required', Rule::exists('categorias_orcamento', 'id')->where('id_portfolio_artista', $portfolio->id)],
             'tipo' => 'required|in:texto,opcoes,anexo',
             'titulo' => 'required|string|max:500',
             'ordem' => 'nullable|integer|min:0',
@@ -54,13 +56,15 @@ class PerguntaPropostaContratoController extends Controller
 
         PerguntaPropostaContrato::create([
             'id_portfolio_artista' => $portfolio->id,
+            'id_categoria_orcamento' => $validated['id_categoria_orcamento'],
             'tipo' => $validated['tipo'],
             'titulo' => $validated['titulo'],
             'opcoes_json' => $opcoes,
             'ordem' => $validated['ordem'] ?? 0,
         ]);
 
-        return back()->with('success', 'Pergunta adicionada.');
+        return back()->with('success', 'Pergunta adicionada.')
+            ->with('categoria_orcamento_aberta', $validated['id_categoria_orcamento']);
     }
 
     public function update(Request $request, PerguntaPropostaContrato $perguntaPropostaContrato)
@@ -71,6 +75,7 @@ class PerguntaPropostaContratoController extends Controller
         }
 
         $rules = [
+            'id_categoria_orcamento' => ['required', Rule::exists('categorias_orcamento', 'id')->where('id_portfolio_artista', $portfolio->id)],
             'titulo' => 'required|string|max:500',
             'ordem' => 'nullable|integer|min:0',
         ];
@@ -81,6 +86,7 @@ class PerguntaPropostaContratoController extends Controller
         $validated = $request->validate($rules);
 
         $data = [
+            'id_categoria_orcamento' => $validated['id_categoria_orcamento'],
             'titulo' => $validated['titulo'],
             'ordem' => $validated['ordem'] ?? $perguntaPropostaContrato->ordem,
         ];
@@ -94,7 +100,8 @@ class PerguntaPropostaContratoController extends Controller
 
         $perguntaPropostaContrato->update($data);
 
-        return back()->with('success', 'Pergunta atualizada.');
+        return back()->with('success', 'Pergunta atualizada.')
+            ->with('categoria_orcamento_aberta', $validated['id_categoria_orcamento']);
     }
 
     public function destroy(PerguntaPropostaContrato $perguntaPropostaContrato)
@@ -104,11 +111,13 @@ class PerguntaPropostaContratoController extends Controller
             abort(403);
         }
         if (RespostaPropostaPergunta::where('id_pergunta', $perguntaPropostaContrato->id)->exists()) {
-            return back()->with('error', 'Não é possível excluir: já existem propostas com respostas a esta pergunta.');
+            return back()->with('error', 'Não é possível excluir: já existem propostas com respostas a esta pergunta.')
+                ->with('categoria_orcamento_aberta', $perguntaPropostaContrato->id_categoria_orcamento);
         }
         $perguntaPropostaContrato->delete();
 
-        return back()->with('success', 'Pergunta removida.');
+        return back()->with('success', 'Pergunta removida.')
+            ->with('categoria_orcamento_aberta', $perguntaPropostaContrato->id_categoria_orcamento);
     }
 
     private function portfolioAutorizado()

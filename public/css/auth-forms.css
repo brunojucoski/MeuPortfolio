@@ -1,0 +1,355 @@
+/* Form by andrew-demchenk0 on Uiverse.io (MIT); adapted to existing fields. */
+.auth-page {
+  --auth-ink: #323232;
+  --auth-muted: #666;
+  --auth-card-background: #d3d3d3;
+  font-family: "Jost", sans-serif;
+}
+
+.auth-page .cadastro-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 600px);
+  align-items: start;
+  gap: 64px;
+  max-width: 1180px;
+  margin-inline: auto;
+  min-height: calc(100svh - 80px) !important;
+  padding: 148px 28px 64px;
+}
+
+.auth-login-page .cadastro-container {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  align-items: center;
+}
+
+.auth-page .left-illustration {
+  position: sticky;
+  top: 160px;
+  min-width: 0;
+  padding: 20px 0;
+  background: transparent;
+}
+
+.auth-login-page .left-illustration {
+  position: static;
+}
+
+.auth-page .left-illustration img {
+  width: 100%;
+  max-width: 360px;
+  max-height: 420px;
+  height: auto;
+  object-fit: contain;
+  padding: 0 !important;
+}
+
+.auth-page .form-section {
+  display: block;
+  min-width: 0;
+  padding: 28px;
+  background: var(--auth-card-background);
+  color: var(--auth-ink);
+  border: 2px solid var(--auth-ink);
+  border-radius: 5px;
+  box-shadow: 4px 4px var(--auth-ink);
+  animation: auth-card-enter 350ms ease-out;
+}
+
+.auth-page .form-title {
+  color: var(--auth-ink);
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: 0;
+  margin: 0 0 28px;
+  text-align: center;
+  overflow-wrap: break-word;
+}
+
+.auth-page .auth-form-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+}
+
+.auth-login-page .auth-form-fields {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.auth-page .auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.auth-page .auth-field-full {
+  grid-column: 1 / -1;
+}
+
+.auth-page .form-section .form-label {
+  color: var(--auth-ink);
+  font-size: .875rem;
+  font-weight: 600;
+  margin-bottom: 0 !important;
+}
+
+.auth-page .form-section .form-control {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  height: 44px;
+  margin-bottom: 0;
+  padding: 8px 10px;
+  border: 2px solid var(--auth-ink);
+  border-radius: 5px;
+  box-shadow: 4px 4px var(--auth-ink);
+  background-color: #fff;
+  color: var(--auth-ink);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  transition: border-color 160ms ease;
+}
+
+.auth-page .form-section .form-control::placeholder {
+  color: var(--auth-muted);
+  opacity: .8;
+  font-weight: 400;
+}
+
+.auth-page .form-section .form-control:focus {
+  border-color: var(--roxo-appolo);
+  outline: 2px solid var(--roxo-appolo);
+  outline-offset: 2px;
+}
+
+.auth-page .submit-btn,
+.auth-page .auth-signup-actions .cadastro-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 2px solid var(--auth-ink) !important;
+  border-radius: 5px !important;
+  background: #fff;
+  color: var(--auth-ink);
+  box-shadow: 4px 4px var(--auth-ink);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  letter-spacing: 0;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.auth-page .submit-btn {
+  padding: 8px 12px;
+  font-size: 17px;
+  margin-top: 24px;
+}
+
+.auth-page .auth-signup-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.auth-page .auth-signup-actions .cadastro-button {
+  width: auto !important;
+  padding: 8px !important;
+  font-size: .875rem;
+}
+
+.auth-page .submit-btn:hover,
+.auth-page .auth-signup-actions .cadastro-button:hover {
+  background: var(--roxo-appolo);
+  color: #fff !important;
+}
+
+.auth-page .submit-btn:active,
+.auth-page .auth-signup-actions .cadastro-button:active {
+  box-shadow: 0 0 var(--auth-ink);
+  transform: translate(3px, 3px);
+}
+
+.auth-page .submit-btn:focus-visible,
+.auth-page .cadastro-button:focus-visible,
+.auth-page .login-link a:focus-visible {
+  outline: 2px solid var(--roxo-appolo);
+  outline-offset: 5px;
+}
+
+.auth-page .login-link {
+  color: var(--auth-muted);
+  font-size: .9rem;
+  margin: 24px 0 0;
+}
+
+.auth-page .login-link a {
+  color: var(--roxo-appolo);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-page .form-section .field-hint-invalid {
+  color: #842029;
+  margin: 4px 0 0;
+}
+
+.auth-page .form-section .address-map-card {
+  border: 2px solid var(--auth-ink);
+  border-radius: 5px;
+}
+
+@keyframes auth-card-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 991px) {
+  .auth-page .cadastro-container {
+    grid-template-columns: minmax(0, 600px);
+    justify-content: center;
+    padding: 128px 24px 48px;
+  }
+
+  .auth-login-page .cadastro-container {
+    grid-template-columns: minmax(0, 420px);
+  }
+
+  .auth-page .left-illustration {
+    display: none;
+  }
+
+  .auth-page .navbar-brand {
+    color: var(--roxo-appolo) !important;
+  }
+}
+
+@media (max-width: 575px) {
+  .auth-page .cadastro-container {
+    padding: 124px 16px 40px;
+  }
+
+  .auth-page .form-section {
+    padding: 24px 18px;
+  }
+
+  .auth-page .auth-form-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .auth-page .form-section .form-control {
+    font-size: 16px;
+  }
+
+  .auth-page .auth-signup-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page .form-section {
+    animation: none;
+  }
+
+  .auth-page .form-control,
+  .auth-page .submit-btn,
+  .auth-page .cadastro-button {
+    transition: none;
+  }
+}
+.auth-page {
+  background: #fff;
+  isolation: isolate;
+}
+
+.auth-page .auth-pixel-background {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.auth-page .cadastro-container,
+.auth-page footer {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-page .left-illustration img {
+  mix-blend-mode: multiply;
+}
+
+.auth-internal-page .cadastro-container {
+  grid-template-columns: minmax(0, 420px);
+  justify-content: center;
+  align-items: center;
+  min-height: 100svh !important;
+  max-width: none;
+  gap: 0;
+  padding: 24px 20px;
+}
+
+.auth-internal-page .form-section {
+  animation: none;
+}
+
+.auth-register-page .form-title {
+  margin-bottom: 12px;
+}
+
+.cadastro-profile-toggle {
+  align-items: center;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 60px minmax(0, 1fr);
+  gap: 8px;
+  min-height: 84px;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto 20px;
+  padding: 38px 0 8px;
+  user-select: none;
+}
+
+.cadastro-profile-toggle[hidden],
+.cadastro-profile-fallback[hidden] {
+  display: none;
+}
+
+.cadastro-profile-label {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  letter-spacing: 0;
+  color: var(--auth-muted);
+}
+
+.cadastro-profile-toggle:not(.is-requester) .cadastro-profile-label-artist,
+.cadastro-profile-toggle.is-requester .cadastro-profile-label-requester {
+  color: var(--roxo-appolo);
+  font-weight: 700;
+}
+
+.cadastro-profile-fallback {
+  margin-bottom: 24px;
+}
+
+.cadastro-profile-fallback .form-select {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+@media (max-width: 575px) {
+  .auth-register-page .form-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 64px;
+  }
+}
+

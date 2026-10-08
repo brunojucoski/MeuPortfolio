@@ -1,0 +1,160 @@
+/* Adapted from Uiverse: adamgiebl/strong-zebra-87, eslam-hany/selfish-bobcat-73,
+   gharsh11032000/selfish-owl-57. MIT license: resources/licenses/uiverse-cards.txt. */
+#portfolio-navigation [hidden], .portfolio-icon-picker [hidden] { display: none !important; }
+#portfolio-navigation { overflow-x: clip; }
+#editModalportfolio .portfolio-settings-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; }
+#editModalportfolio .portfolio-settings-tabs .nav-item { padding-top: 0 !important; flex: 0 0 auto; }
+#editModalportfolio .portfolio-settings-tabs .nav-link { font-size: 14px !important; white-space: nowrap; padding: 12px; }
+.portfolio-colors { display: flex; align-items: flex-end; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid #ddd; }
+.portfolio-colors .form-control-color { width: 64px; height: 40px; }
+.portfolio-color-reset { width: 40px; height: 40px; border: 1px solid #ddd; border-radius: 5px; background: white; color: #555; }
+#editModalportfolio .modal-footer { flex-wrap: wrap; }
+@media (max-width: 575px) {
+  #editModalportfolio .portfolio-settings-tabs { display: grid; grid-template-columns: 1fr 1.2fr .6fr; overflow: visible; }
+  #editModalportfolio .portfolio-settings-tabs .nav-item { min-width: 0; }
+  #editModalportfolio .portfolio-settings-tabs .nav-link { width: 100%; height: 100%; min-height: 52px; padding: 8px 4px; white-space: normal; font-size: 13px !important; line-height: 1.3; }
+  .portfolio-colors { gap: 16px; }
+}
+#portfolio-navigation[aria-busy="true"] [data-portfolio-post] { pointer-events: none; }
+#portfolio-categorias, #portfolio-posts { scroll-margin-top: 110px; }
+.portfolio-back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.portfolio-current-title { display: flex; align-items: center; justify-content: center; gap: 10px; overflow-wrap: anywhere; }
+.portfolio-category-description { max-width: 640px; margin: 0 auto 24px; overflow-wrap: anywhere; }
+.portfolio-current-title:focus { outline: none; }
+.portfolio-posts-heading { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.portfolio-posts-heading .portfolio-current-title { min-width: 0; flex: 1 1 200px; }
+.portfolio-posts-heading .btn { flex: 0 0 auto; }
+.portfolio-icon { display: inline-block; flex: 0 0 auto; width: 1em; height: 1em; line-height: 1; font-size: 24px; vertical-align: middle; }
+.portfolio-icon-pixel { background: currentColor; mask: var(--pixel-icon) center / contain no-repeat; -webkit-mask: var(--pixel-icon) center / contain no-repeat; }
+.perfil-publico-page .perfil-categoria-title { flex-direction: column; gap: 8px; }
+.perfil-publico-page .perfil-categoria-title .portfolio-icon { font-size: 32px; }
+.perfil-publico-page .perfil-categoria-card-estilo-2 .perfil-categoria-title { flex-direction: row; gap: 6px; }
+.perfil-publico-page .perfil-categoria-card-estilo-2 .perfil-categoria-title .portfolio-icon { font-size: 22px; }
+.perfil-publico-page .perfil-categoria-card-estilo-3:is(:hover, :focus) .perfil-categoria-title { flex-direction: row; gap: 8px; }
+.perfil-publico-page .perfil-categoria-book-page .portfolio-icon,
+.perfil-publico-page .perfil-categoria-flip-content .portfolio-icon { align-self: center; color: var(--roxo-appolo); font-size: 28px; }
+.perfil-publico-page :is(.perfil-categoria-card-estilo-3, .perfil-categoria-card-estilo-4, .perfil-categoria-card-estilo-5) .portfolio-icon {
+  animation: portfolio-category-icon-turn 3s ease-in-out infinite;
+  transform-origin: center;
+  backface-visibility: visible;
+  filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, .22));
+}
+@keyframes portfolio-category-icon-turn {
+  from { transform: perspective(240px) rotateY(0deg); }
+  to { transform: perspective(240px) rotateY(360deg); }
+}
+.portfolio-category-name { display: flex; align-items: center; gap: 10px; }
+.portfolio-category-name > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.portfolio-icon-picker { border: 0; min-width: 0; }
+.portfolio-icon-filters { display: flex; gap: 4px; border-bottom: 1px solid #ddd; margin-bottom: 12px; }
+.portfolio-icon-filter { border: 0; border-bottom: 2px solid transparent; background: transparent; color: #555; padding: 8px 12px; font-size: 14px; }
+.portfolio-icon-filter.is-active { color: var(--roxo-appolo); border-bottom-color: var(--roxo-appolo); }
+.portfolio-icon-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; max-height: 210px; overflow-y: auto; padding: 3px; }
+.portfolio-icon-option { display: flex; align-items: center; justify-content: center; position: relative; height: 44px; border: 1px solid #ddd; border-radius: 5px; color: #444; cursor: pointer; }
+.portfolio-icon-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.portfolio-icon-option > .bi { font-size: 24px; }
+.portfolio-icon-option:has(input:checked) { border-color: var(--roxo-appolo); background: color-mix(in srgb, var(--roxo-appolo) 10%, white); color: var(--roxo-appolo); box-shadow: inset 0 0 0 1px var(--roxo-appolo); }
+.portfolio-icon-option:has(input:focus-visible) { outline: 2px solid var(--roxo-appolo); outline-offset: 2px; }
+.perfil-publico-page .perfil-posts-section { background: #e8e8e8 !important; padding: 24px 0 36px; }
+.perfil-publico-page .perfil-post-card {
+  background: #e0e0e0;
+  border-radius: 30px;
+  box-shadow: 15px 15px 30px #bebebe, -15px -15px 30px #fff;
+  padding: 14px;
+  height: 100%;
+  min-width: 0;
+}
+.perfil-publico-page .perfil-post-card .carousel-inner { border-radius: 20px; aspect-ratio: 4 / 3; }
+.perfil-publico-page .perfil-post-card .carousel-item { height: 100%; }
+.perfil-publico-page .perfil-post-card .gallery-img { height: 100%; width: 100%; object-fit: cover; border-radius: 0 !important; cursor: pointer; }
+.perfil-publico-page .perfil-post-title {
+  display: block;
+  background: transparent;
+  border: 0;
+  color: #333;
+  font-weight: 700;
+  text-align: left;
+  padding: 14px 6px 4px;
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+.perfil-publico-page .perfil-post-title:focus-visible { outline: 2px solid var(--roxo-appolo); outline-offset: 2px; }
+.perfil-publico-page .perfil-categoria-card-estilo-4 {
+  border-radius: 10px;
+  width: 220px;
+  height: 300px;
+  max-width: 100%;
+  background: whitesmoke;
+  box-shadow: 1px 1px 12px #000;
+  perspective: 2000px;
+  transform-style: preserve-3d;
+  color: #000;
+}
+.perfil-publico-page .perfil-categoria-book-cover {
+  inset: 0;
+  position: absolute;
+  background: lightgray;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transform-origin: left;
+  box-shadow: 1px 1px 12px #000;
+  transition: transform 0.5s;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+.perfil-publico-page .perfil-categoria-card-estilo-4:is(:hover, :focus-visible) .perfil-categoria-book-cover { transform: rotateY(-80deg); }
+.perfil-publico-page .perfil-categoria-book-page,
+.perfil-publico-page .perfil-categoria-flip-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  overflow-wrap: anywhere;
+  color: #333;
+  text-align: center;
+}
+.perfil-publico-page .perfil-categoria-book-page { padding-left: 36px; }
+.perfil-publico-page .perfil-categoria-book-page strong,
+.perfil-publico-page .perfil-categoria-flip-content strong { font-size: 20px; line-height: 1.2; }
+.perfil-publico-page .perfil-categoria-book-page > span,
+.perfil-publico-page .perfil-categoria-flip-content > span { font-size: 14px; line-height: 1.4; color: #666; }
+.perfil-publico-page .perfil-categoria-card-estilo-5 {
+  width: 300px;
+  height: 200px;
+  max-width: 100%;
+  background: #f2f2f2;
+  border-radius: 10px;
+  overflow: hidden;
+  perspective: 1000px;
+  box-shadow: 0 0 0 5px #ffffff80;
+  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.6s;
+}
+.perfil-publico-page .perfil-categoria-card-estilo-5:is(:hover, :focus-visible) { transform: scale(1.05); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); }
+.perfil-publico-page .perfil-categoria-flip-content {
+  background: #f2f2f2;
+  transform: rotateX(-90deg);
+  transform-origin: bottom;
+  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 11;
+}
+.perfil-publico-page .perfil-categoria-card-estilo-5:is(:hover, :focus-visible) .perfil-categoria-flip-content { transform: rotateX(0deg); }
+.perfil-publico-page :is(.perfil-categoria-card-estilo-4, .perfil-categoria-card-estilo-5) .perfil-categoria-overlay { background: rgba(0, 0, 0, 0.25); }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-4 { transform: scale(0.62); flex-shrink: 0; }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-5 { transform: scale(0.7); flex-shrink: 0; }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-5:hover { transform: scale(0.73); }
+.perfil-publico-page .perfil-estilo-option:hover .perfil-categoria-book-cover { transform: rotateY(-80deg); }
+.perfil-publico-page .perfil-estilo-option:hover .perfil-categoria-flip-content { transform: rotateX(0deg); }
+.perfil-publico-page .orcamento-pergunta[hidden] { display: none; }
+#modalPropostaContrato .modal-dialog { width: auto; }
+#modalPropostaContrato form { display: flex; min-height: 0; }
+#modalPropostaContrato .modal-content { max-height: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .perfil-publico-page :is(.perfil-categoria-card-estilo-3, .perfil-categoria-card-estilo-4, .perfil-categoria-card-estilo-5) .portfolio-icon { animation: none; transform: none; }
+  .perfil-publico-page .perfil-categoria-card,
+  .perfil-publico-page .perfil-categoria-book-cover,
+  .perfil-publico-page .perfil-categoria-flip-content { transition: none; }
+}

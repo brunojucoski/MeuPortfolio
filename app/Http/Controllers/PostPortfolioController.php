@@ -54,6 +54,7 @@ class PostPortfolioController extends Controller
         $request->validate([
             'nome' => 'required|string|max:255',
             'descricao' => 'required|string|max:1000',
+            'imagens' => 'nullable|array|max:20',
             'imagens.*' => 'file|mimes:jpeg,jpg,png,gif|max:8192',
             'id_categoria_post_portfolio' => 'nullable|integer|exists:categorias_posts_portfolio,id',
         ]);
@@ -62,7 +63,7 @@ class PostPortfolioController extends Controller
         if ($idCategoria) {
             $categoria = CategoriaPostPortfolio::find((int) $idCategoria);
             if (! $categoria || (int) $categoria->id_portfolio_artista !== (int) $portfolio->id) {
-                return back()->with('error', 'Categoria inválida para este portfólio.');
+                return back()->with('error', 'Álbum inválido para este portfólio.');
             }
         }
 
@@ -133,6 +134,7 @@ class PostPortfolioController extends Controller
         $request->validate([
             'nome' => 'required|string|max:255',
             'descricao' => 'required|string|max:1000',
+            'imagens' => 'nullable|array|max:20',
             'imagens.*' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:8192', // Permite novas imagens, GIF incluído
             'imagens_para_remover' => 'nullable|array', // Array de IDs de imagens a serem removidas
             'imagens_para_remover.*' => 'exists:posts_imgs,id', // Valida se os IDs existem na tabela
@@ -144,7 +146,7 @@ class PostPortfolioController extends Controller
         if ($idCategoria) {
             $categoria = CategoriaPostPortfolio::find((int) $idCategoria);
             if (! $categoria || (int) $categoria->id_portfolio_artista !== (int) $portfolio->id) {
-                return back()->with('error', 'Categoria inválida para este portfólio.');
+                return back()->with('error', 'Álbum inválido para este portfólio.');
             }
         }
 

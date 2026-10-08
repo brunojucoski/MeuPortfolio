@@ -1,0 +1,47 @@
+/* Uiverse adaptations: vinodjangid07/great-ape-33 and sekaiking/tidy-starfish-71.
+   MIT attribution: resources/licenses/uiverse-profile-controls.txt. */
+.portfolio-social-links { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 8px 0 16px; }
+.perfil-publico-page .social-icons .portfolio-social-link {
+  position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center;
+  width: 45px; height: 45px; flex: 0 0 45px; border: 0; border-radius: 7px;
+  text-decoration: none; transition: transform .3s; color: white !important;
+}
+.portfolio-social-icon { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: transparent; backdrop-filter: blur(4px); border-radius: 8px; border: 1px solid rgba(156,156,156,.466); transition: background-color .3s; }
+.portfolio-social-icon .bi { font-size: 24px; line-height: 1; color: white; }
+.portfolio-social-background { position: absolute; inset: 0; background: var(--social-background, var(--roxo-appolo)); z-index: -1; border-radius: 8px; pointer-events: none; transition: transform .3s; }
+.portfolio-social-link--instagram { --social-background: linear-gradient(45deg,#f6b571 0%,#e99a7d 25%,#de8290 50%,#ba6a8a 75%,#c769a9 100%); }
+.portfolio-social-link--tiktok { --social-background: #3f3f3f; }
+.portfolio-social-link--github { --social-background: #3e454d; }
+.portfolio-social-link--linkedin { --social-background: #5b98d5; }
+.portfolio-social-link--whatsapp { --social-background: #729982; }
+.portfolio-social-tooltip { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); padding: 5px 8px; border-radius: 5px; font-size: 12px; font-weight: 500; white-space: nowrap; color: white; background: #242424; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s; }
+.portfolio-social-link:is(:hover,:focus-visible) .portfolio-social-background { transform: rotate(35deg); transform-origin: bottom; }
+.portfolio-social-link:is(:hover,:focus-visible) .portfolio-social-icon { background: rgba(156,156,156,.466); }
+.portfolio-social-link:is(:hover,:focus-visible) .portfolio-social-tooltip { opacity: 1; visibility: visible; }
+.portfolio-social-link:focus-visible { outline: 2px solid var(--roxo-appolo); outline-offset: 5px; }
+.portfolio-area-tag { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; min-height: 44px; background: white; color: var(--roxo-appolo); border-radius: 10em; font-size: 16px; font-weight: 600; padding: .65em 1.4em; border: 1px solid var(--roxo-appolo); box-shadow: 0 0 0 0 var(--roxo-appolo); transition: transform .3s ease-in-out, box-shadow .3s ease-in-out; overflow-wrap: anywhere; text-align: center; }
+.portfolio-area-tag:hover { transform: translateY(-4px) translateX(-2px); box-shadow: 2px 5px 0 0 var(--roxo-appolo); }
+.portfolio-area-tag:active { transform: translateY(2px) translateX(1px); box-shadow: 0 0 0 0 var(--roxo-appolo); }
+.perfil-publico-page .perfil-areas-atuacao > .d-flex { gap: 12px !important; padding-bottom: 8px; }
+.perfil-orcamento-actions { display: flex; justify-content: flex-start; }
+.perfil-publico-page .perfil-orcamento-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-width: min(260px, 100%); max-width: 100%; min-height: 50px;
+  padding: 12px 24px !important; font-size: 16px; font-weight: 650 !important;
+  color: var(--orcamento-texto, #fff) !important; line-height: 1.35;
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--roxo-appolo) 28%, transparent) !important;
+  transition: background-color .2s ease, box-shadow .2s ease;
+}
+.perfil-orcamento-button .bi { flex: 0 0 auto; font-size: 20px; line-height: 1; }
+.perfil-orcamento-button span { min-width: 0; overflow-wrap: anywhere; }
+.perfil-publico-page .perfil-orcamento-button:not(:disabled):is(:hover, :focus-visible) { color: var(--orcamento-texto-hover, #fff) !important; background: var(--roxo-claro) !important; }
+.perfil-publico-page .perfil-orcamento-button:focus-visible { outline: 2px solid var(--roxo-appolo); outline-offset: 4px; }
+.perfil-publico-page .perfil-orcamento-button:disabled { box-shadow: none !important; }
+@media (max-width: 767.98px) {
+  .portfolio-social-links { justify-content: center; }
+  .perfil-header-rating { text-align: center; }
+  .perfil-orcamento-actions { justify-content: center; }
+  .perfil-publico-page .perfil-orcamento-button { width: min(320px, 100%); }
+}
+@media (max-width: 575.98px) { .portfolio-social-links { max-width: 167px; margin-inline: auto; } }
+@media (prefers-reduced-motion: reduce) { .portfolio-social-link, .portfolio-social-background, .portfolio-social-icon, .portfolio-area-tag, .perfil-orcamento-button { transition: none !important; } .portfolio-social-link:is(:hover,:focus-visible) .portfolio-social-background, .portfolio-area-tag:hover { transform: none; } }

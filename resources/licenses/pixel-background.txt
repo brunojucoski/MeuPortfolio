@@ -1,0 +1,10 @@
+Pixel background visual reference
+https://ui.unlumen.com/components/pixel
+Reference author: Leo (unlumen UI); public page credits React Bits Pixel Card.
+
+The authentication background is an original vanilla Canvas implementation
+inspired by the public visual demo and documented light palette/particle gap.
+The paid Pro component source was not accessed or copied. No React, Motion,
+registry access, license key or external background service is required.
+Local implementation includes pointer/touch/scroll ripples, a bounded viewport
+grid, idle/visibility suspension and reduced-motion support.

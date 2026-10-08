@@ -8,6 +8,7 @@
     <title>MeuPortfólio — Início</title>
     <link href="{{ asset('css/navbar.css') }}" rel="stylesheet">
     <link href="{{ asset('css/home.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/lever-switch.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
@@ -19,23 +20,29 @@
 <main class="home-page-main">
 
     {{-- HERO --}}
-    <section class="home-hero py-5 position-relative overflow-hidden">
-        <div class="home-hero-bg" aria-hidden="true"></div>
-        <div class="container position-relative py-lg-4">
-            <div class="row align-items-center hero-row gy-4">
-                <div class="col-lg-6" data-aos="fade-right">
+    <section class="home-hero position-relative overflow-hidden">
+        <div class="home-aurora" data-aurora-bars aria-hidden="true">
+            <div class="home-aurora-bars">
+                        @for ($bar = 0; $bar < 16; $bar++)
+                    <div class="home-aurora-slot"><div class="home-aurora-bar"></div></div>
+                @endfor
+            </div>
+        </div>
+        <div class="container home-hero-content position-relative">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-9 text-center">
                     <p class="home-kicker text-uppercase small fw-semibold mb-2">Comunidade criativa</p>
                     <h1 class="home-hero-title text-nome fw-bold mb-3">
                         Conectando artistas e solicitantes em um só lugar
                     </h1>
-                    <p class="lead text-muted mb-4">
+                    <p class="home-hero-description lead mb-4">
                         Cadastre seu portfólio, receba pedidos de orçamento com formulários personalizados e fortaleça sua reputação com avaliações — tudo no MeuPortfólio.
                     </p>
-                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <div class="home-hero-actions d-flex flex-wrap gap-2 align-items-center justify-content-center">
                         @guest
-                            <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#cadastroModal">
+                            <a class="btn btn-primary-custom" href="{{ route('usuarios.cadastro') }}">
                                 Cadastrar-se
-                            </button>
+                            </a>
                             <a href="{{ route('login') }}" class="btn btn-outline-custom">Entrar</a>
                         @else
                             <a href="{{ route('usuarios.perfilPublico', Auth::id()) }}" class="btn btn-primary-custom">Meu perfil</a>
@@ -46,18 +53,6 @@
                         <a href="{{ route('usuarios.publico') }}" class="btn btn-outline-custom">
                             <i class="bi bi-search me-1"></i> Buscar portfólios
                         </a>
-                    </div>
-                </div>
-                <div class="col-lg-6 text-center" data-aos="fade-left">
-                    <div class="home-hero-visual mx-auto">
-                        <div class="home-float-icon home-float-1"><i class="bi bi-palette-fill"></i></div>
-                        <div class="home-float-icon home-float-2"><i class="bi bi-camera-fill"></i></div>
-                        <div class="home-float-icon home-float-3"><i class="bi bi-chat-heart-fill"></i></div>
-                        <div class="home-float-card shadow-lg">
-                            <i class="bi bi-stars text-purple display-4"></i>
-                            <p class="mt-3 mb-0 fw-semibold text-purple">Orçamentos organizados</p>
-                            <p class="small text-muted mb-0">Formulários sob medida para cada artista</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -77,7 +72,7 @@
                         <div class="card-body p-4">
                             <div class="home-icon-wrap mb-3"><i class="bi bi-folder2-open"></i></div>
                             <h3 class="h5 fw-semibold text-purple">Portfólios organizados</h3>
-                            <p class="text-muted small mb-0">Posts e categorias para mostrar seu trabalho com clareza.</p>
+                            <p class="text-muted small mb-0">Posts e álbuns para mostrar seu trabalho com clareza.</p>
                         </div>
                     </div>
                 </div>
@@ -112,10 +107,21 @@
             </div>
 
             <div class="d-flex justify-content-center mb-4" data-aos="fade-up">
-                <div class="btn-group home-toggle-group shadow-sm" role="group" aria-label="Tipo de usuário">
-                    <button type="button" class="btn btn-primary-custom px-4 active" style="margin-right: 16px" id="btnArtista" aria-pressed="true">Sou artista</button>
-                    <button type="button" class="btn btn-outline-custom px-4" id="btnContratante" aria-pressed="false">Sou solicitante</button>
-                </div>
+                <label class="home-audience-toggle lever-switch" for="home-audience-switch">
+                    <span class="home-audience-label home-audience-label-artist">Sou artista</span>
+                    <span class="toggle-container">
+                        <input class="toggle-input" type="checkbox" role="switch" id="home-audience-switch"
+                            aria-label="Mostrar benefícios para solicitantes" aria-controls="conteudoArtista conteudoContratante">
+                        <span class="toggle-handle-wrapper" aria-hidden="true">
+                            <span class="toggle-handle">
+                                <span class="toggle-handle-knob"></span>
+                                <span class="toggle-handle-bar-wrapper"><span class="toggle-handle-bar"></span></span>
+                            </span>
+                        </span>
+                        <span class="toggle-base" aria-hidden="true"><span class="toggle-base-inside"></span></span>
+                    </span>
+                    <span class="home-audience-label home-audience-label-requester">Sou solicitante</span>
+                </label>
             </div>
 
             <div class="row justify-content-center">
@@ -123,18 +129,18 @@
                     <div id="conteudoArtista" class="home-toggle-panel card border-0 shadow-sm" data-aos="zoom-in">
                         <div class="card-body p-4 p-md-5">
                             <ul class="list-unstyled mb-4 home-benefit-list">
-                                <li><i class="bi bi-check-circle-fill text-purple me-2"></i> Portfólio público com posts e categorias</li>
+                                <li><i class="bi bi-check-circle-fill text-purple me-2"></i> Portfólio público com posts e álbuns</li>
                                 <li><i class="bi bi-check-circle-fill text-purple me-2"></i> Formulário de orçamento configurável</li>
                                 <li><i class="bi bi-check-circle-fill text-purple me-2"></i> Notificações quando receber pedidos</li>
                                 <li><i class="bi bi-check-circle-fill text-purple me-2"></i> Timeline e avaliações após trabalhos</li>
                             </ul>
                             @guest
-                                <a href="{{ route('usuarios.createArtista') }}" class="btn btn-primary-custom btn-sm">Cadastro artista</a>
+                                <a href="{{ route('usuarios.cadastro', ['tipo' => 'artista']) }}" class="btn btn-primary-custom btn-sm">Cadastro artista</a>
                             @endguest
                         </div>
                     </div>
 
-                    <div id="conteudoContratante" class="home-toggle-panel card border-0 shadow-sm d-none" data-aos="zoom-in">
+                    <div id="conteudoContratante" class="home-toggle-panel card border-0 shadow-sm d-none" hidden data-aos="zoom-in">
                         <div class="card-body p-4 p-md-5">
                             <ul class="list-unstyled mb-4 home-benefit-list">
                                 <li><i class="bi bi-check-circle-fill text-purple me-2"></i> Buscar portfólios por área</li>
@@ -143,7 +149,7 @@
                                 <li><i class="bi bi-check-circle-fill text-purple me-2"></i> Avaliar artistas após serviços</li>
                             </ul>
                             @guest
-                                <a href="{{ route('usuarios.createContratante') }}" class="btn btn-primary-custom btn-sm">Cadastro solicitante</a>
+                                <a href="{{ route('usuarios.cadastro', ['tipo' => 'solicitante']) }}" class="btn btn-primary-custom btn-sm">Cadastro solicitante</a>
                             @endguest
                         </div>
                     </div>
@@ -201,7 +207,7 @@
             <div class="d-flex flex-wrap justify-content-center gap-2">
                 <a href="{{ route('usuarios.publico') }}" class="btn btn-light text-purple fw-semibold px-4">Buscar portfólios</a>
                 @guest
-                    <button type="button" class="btn btn-outline-light px-4" data-bs-toggle="modal" data-bs-target="#cadastroModal">Criar conta</button>
+                    <a class="btn btn-outline-light px-4" href="{{ route('usuarios.cadastro') }}">Criar conta</a>
                     <a href="{{ route('login') }}" class="btn btn-outline-light px-4">Já tenho conta</a>
                 @else
                     <a href="{{ route('usuarios.perfilPublico', Auth::id()) }}" class="btn btn-outline-light px-4">Ir ao meu perfil</a>
@@ -216,42 +222,7 @@
 @include('Components.footer')
 
 <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    if (typeof AOS !== 'undefined') {
-        AOS.init({ duration: 750, once: true, offset: 48, easing: 'ease-out-cubic' });
-    }
-
-    var btnArtista = document.getElementById('btnArtista');
-    var btnContratante = document.getElementById('btnContratante');
-    var elArtista = document.getElementById('conteudoArtista');
-    var elContratante = document.getElementById('conteudoContratante');
-
-    function setToggle(isArtista) {
-        if (!btnArtista || !btnContratante || !elArtista || !elContratante) return;
-
-        btnArtista.classList.toggle('btn-primary-custom', isArtista);
-        btnArtista.classList.toggle('btn-outline-custom', !isArtista);
-        btnArtista.classList.toggle('active', isArtista);
-        btnArtista.setAttribute('aria-pressed', isArtista ? 'true' : 'false');
-
-        btnContratante.classList.toggle('btn-primary-custom', !isArtista);
-        btnContratante.classList.toggle('btn-outline-custom', isArtista);
-        btnContratante.classList.toggle('active', !isArtista);
-        btnContratante.setAttribute('aria-pressed', !isArtista ? 'true' : 'false');
-
-        elArtista.classList.toggle('d-none', !isArtista);
-        elContratante.classList.toggle('d-none', isArtista);
-
-        if (typeof AOS !== 'undefined') {
-            AOS.refresh();
-        }
-    }
-
-    btnArtista.addEventListener('click', function () { setToggle(true); });
-    btnContratante.addEventListener('click', function () { setToggle(false); });
-});
-</script>
+<script src="{{ asset('js/home.js') }}" defer></script>
 
 </body>
 </html>

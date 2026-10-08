@@ -1,0 +1,13 @@
+Aurora Bars
+Reference: https://ui.unlumen.com/components/aurora-bars
+Author/site: unlumen UI
+Original concept credited by the reference: @SannaGranqvistX
+
+The home background adapts the publicly displayed aurora-bars.tsx height
+calculation, gradient, bar geometry and vignette to vanilla JavaScript/CSS.
+It uses 16 touching bars to match the public demo, height bounds 0.18/0.92,
+opacity 0.85 and the pink gradient. Local tuning adds 2px blur, speed 1.5,
+and smoothly randomized phases/frequencies for independent height drift.
+
+The React/Motion dependency is not required by this Laravel implementation.
+Visibility and reduced-motion controls were added locally.

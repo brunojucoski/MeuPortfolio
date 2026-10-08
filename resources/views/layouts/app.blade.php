@@ -5,20 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Appolo')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{{ asset('css/navbar-shell.css') }}" rel="stylesheet">
+    @include('Components.system-theme')
+    @stack('styles')
     
     </head>
  <body>
-     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+     <nav class="navbar navbar-expand-lg navbar-light mb-4 site-navbar site-navbar-admin" aria-label="Navegação administrativa">
          <div class="container">
-             <a class="navbar-brand" href="{{ route('categorias-artisticas.index') }}">MeuPortfólio</a>
-             <div class="collapse navbar-collapse">
-                 <ul class="navbar-nav me-auto">
+             <a class="navbar-brand site-navbar-brand" href="{{ route('categorias-artisticas.index') }}">@include('Components.brand')</a>
+             <div class="d-flex flex-wrap">
+                 <ul class="navbar-nav me-auto flex-row flex-wrap gap-3">
                      <li class="nav-item">
                          <a class="nav-link" href="{{ route('usuarios.index') }}">Usuários</a>
                      </li>
                      <li class="nav-item">
                          <a class="nav-link" href="{{ route('categorias-artisticas.index') }}">Categorias Artísticas</a>
                      </li>
+                     @if(Auth::check() && (int) Auth::user()->tipo_usuario === 1)
+                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.configuracoes.edit') }}">Configurações visuais</a></li>
+                     @endif
                  </ul>
                  </div>
          </div>
@@ -26,7 +33,7 @@
         
          @if(Auth::check())
     <div class="dropdown ms-auto me-3">
-        <button class="btn btn-outline-light dropdown-toggle" type="button" id="dropdownProfile" data-bs-toggle="dropdown" aria-expanded="false">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="dropdownProfile" data-bs-toggle="dropdown" aria-expanded="false">
             {{ Auth::user()->nome }}
         </button>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownProfile">
@@ -56,6 +63,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-QF1S1F2Hv9V3q0dZx1HOqLzO4PIQlVGxRUHhx+9zV1Wq6v1Xlj2c1wHz0xkBBo5V" crossorigin="anonymous"></script>
 
      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+     @stack('scripts')
 </body>
 </html>
 

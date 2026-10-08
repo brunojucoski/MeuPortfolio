@@ -26,7 +26,6 @@ class Usuario extends Authenticatable
         'nome', 
         'documento', 
         'email', 
-        'sexo_usuario', 
         'senha',
         'tipo_usuario', 
         'data_nasc', 
@@ -77,10 +76,6 @@ class Usuario extends Authenticatable
     }
 
 
- //   public function sexo()
-   // {
-  //      return $this->belongsTo(SexoUsuario::class, 'sexo_usuario');
-  //  }
 
     
     public function getAuthPassword()

@@ -7,14 +7,16 @@
     <title>Login — MeuPortfólio</title>
     <link href="{{ asset('css/cadastro.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/auth-forms.css') }}" rel="stylesheet">
 </head>
-<body class="auth-login-page">
+<body class="auth-page auth-login-page">
 
+@include('Components.auth-pixel-background')
 @include('Components.navbarbootstrap')
 
 <main class="cadastro-container">
     <div class="left-illustration">
-        <img src="{{ asset('imgs/sacredheart.png') }}" alt="Ilustração">
+        <img src="{{ $visualSistema->imagemUrl('login') }}" alt="Ilustração">
     </div>
 
     <div class="form-section" id="formulario-login">
@@ -43,41 +45,43 @@
         <form action="{{ route('login') }}" method="POST" novalidate>
             @csrf
 
-            <label for="email" class="form-label mb-1">E-mail</label>
-            <input
-                type="email"
-                name="email"
-                id="email"
-                class="form-control @error('email') is-invalid @enderror"
-                placeholder="seu@email.com"
-                value="{{ old('email') }}"
-                required
-                autocomplete="username"
-            >
+            <div class="auth-form-fields">
+                <div class="auth-field">
+                    <label for="email" class="form-label mb-1">E-mail</label>
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        class="form-control @error('email') is-invalid @enderror"
+                        placeholder="seu@email.com"
+                        value="{{ old('email') }}"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
 
-            <label for="password" class="form-label mb-1">Senha</label>
-            <input
-                type="password"
-                name="password"
-                id="password"
-                class="form-control @error('password') is-invalid @enderror"
-                placeholder="Senha"
-                required
-                autocomplete="current-password"
-            >
+                <div class="auth-field">
+                    <label for="password" class="form-label mb-1">Senha</label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        class="form-control @error('password') is-invalid @enderror"
+                        placeholder="Senha"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+            </div>
 
             <button type="submit" class="submit-btn">Entrar</button>
         </form>
 
         <hr class="my-4 opacity-25">
 
-        <div class="button-group">
-            <a href="{{ route('usuarios.createArtista') }}" class="text-decoration-none">
-                <button type="button" class="cadastro-button">Cadastro artista</button>
-            </a>
-            <a href="{{ route('usuarios.createContratante') }}" class="text-decoration-none">
-                <button type="button" class="cadastro-button">Cadastro solicitante</button>
-            </a>
+        <div class="auth-signup-actions">
+            <a href="{{ route('usuarios.cadastro', ['tipo' => 'artista']) }}" class="cadastro-button">Cadastro artista</a>
+            <a href="{{ route('usuarios.cadastro', ['tipo' => 'solicitante']) }}" class="cadastro-button">Cadastro solicitante</a>
         </div>
     </div>
 </main>

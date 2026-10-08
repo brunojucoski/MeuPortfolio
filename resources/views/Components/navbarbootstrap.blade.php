@@ -9,6 +9,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
     <link href="{{ asset('css/endereco-map.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/navbar-account.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/navbar-shell.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/post-image-upload.css') }}" rel="stylesheet">
+    @include('Components.system-theme')
 
 
 </head>
@@ -43,170 +47,8 @@
 @endif
 
 
-<nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container-fluid">
-        <a class="navbar-brand me-auto" href="{{ route('homepage') }}">MeuPortfólio</a>
+@include('Components.navbar-content')
 
-        @if(auth()->check() && (auth()->user()->tipo_usuario == 2 || auth()->user()->tipo_usuario == 3))
-        <ul class="navbar-nav d-lg-none order-lg-last"> <li class="nav-item dropdown">
-                <a class="nav-link position-relative" href="#" id="notificacoesDropdownMobile" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="carregarNotificacoes()">
-                    <i class="bi bi-bell fs-4"></i>
-                    @php
-                        $naoLidas = \App\Models\Notificacao::where('usuario_id', Auth::id())->where('lida', false)->count();
-                    @endphp
-                    @if($naoLidas > 0)
-                        <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-secondary" id="contadorNotificacoesMobile">
-                            {{ $naoLidas }}
-                        </span>
-                    @endif
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacoesDropdownMobile" id="listaNotificacoesMobile">
-                    </ul>
-            </li>
-        </ul>
-        @endif
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-            <div class="offcanvas-header">
-                <a class="offcanvas-title" id="offcanvasNavbarLabel" href="{{ route('homepage') }}" style="text-decoration: none;"> MeuPortfólio </a>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body">
-                <ul class="navbar-nav justify-content-left flex-grow-1 pe-3">
-                    <li class="nav-item">
-                        <a class="nav-link mx-lg-2" aria-current="page" href="{{ route('usuarios.publico') }}">Buscar portfólios</a>
-                    </li>
-               <!--     <li class="nav-item">
-                        <a class="nav-link mx-lg-2" href="{{ route('usuarios.contratantes') }}">Solicitantes</a>
-                    </li>
-                    -->
-                    <li class="nav-item">
-                        <a class="nav-link mx-lg-2" href="{{ route('sobrepage') }}">Sobre</a>
-                    </li>
-                    
-                </ul>
-
-                <ul class="navbar-nav d-none d-lg-flex ms-auto align-items-center">
-                    @auth
-                        @if(Auth::user()->tipo_usuario == 2 || Auth::user()->tipo_usuario == 3)
-                        <li class="nav-item dropdown me-2"> <a class="nav-link position-relative" href="#" id="notificacoesDropdownDesktop" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="carregarNotificacoes()">
-                                <i class="bi bi-bell fs-4"></i>
-                                @php
-                                    $naoLidas = \App\Models\Notificacao::where('usuario_id', Auth::id())->where('lida', false)->count();
-                                @endphp
-                                @if($naoLidas > 0)
-                                    <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-secondary" id="contadorNotificacoesDesktop">
-                                        {{ $naoLidas }}
-                                    </span>
-                                @endif
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacoesDropdownDesktop" id="listaNotificacoesDesktop">
-                                </ul>
-                        </li>
-                        @endif
-
-                        @if(Auth::user()->tipo_usuario == 2)
-                      <li class="nav-item me-2">
-                          <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#postModal" data-bs-dismiss="offcanvas">
-                              <i class="bi bi-plus-circle"></i> Post
-                          </button>
-                      </li>
-                        @endif
-                        <li class="nav-item me-2"> <button class="btn btn-outline-custom" data-bs-toggle="offcanvas" data-bs-target="#editOffcanvas">
-                                <i class="bi bi-pencil"></i> Editar perfil
-                            </button>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <button class="btn btn-primary-custom dropdown-toggle" type="button" id="dropdownProfile" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ Auth::user()->nome }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownProfile">
-                                <li><a class="dropdown-item" href="{{ route('usuarios.perfilPublico', Auth::user()->id) }}">Perfil</a></li>
-                                @if(Auth::user()->tipo_usuario == 2 && Auth::user()->portfolioArtista)
-                                    <li><a class="dropdown-item" href="{{ route('perguntas-proposta.index') }}">Formulário de orçamento</a></li>
-                                @endif
-                                <li><a class="dropdown-item" href="{{ route('propostas.minhas') }}">Meus orçamentos</a></li>
-                                <li>
-                                    <form action="{{ route('logout') }}" method="POST">
-                                        @csrf
-                                        <button class="dropdown-item" type="submit">Sair</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    @else
-                        <li class="nav-item me-2"> <a class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#cadastroModal">Cadastrar-se</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="btn btn-primary-custom" href="{{ route('login') }}">Entrar</a>
-                        </li>
-                    @endauth
-                </ul>
-
-                <ul class="navbar-nav d-lg-none mt-3">
-                    @auth
-                        @if(Auth::user()->tipo_usuario == 2)
-                     <li class="nav-item mb-2">
-                          <button class="btn btn-primary-custom w-100" data-bs-toggle="modal" data-bs-target="#postModal" data-bs-dismiss="offcanvas">
-                              <i class="bi bi-plus-circle"></i> Post
-                          </button>
-                      </li>
-                        @endif
-                        <li class="nav-item mb-2">
-                            <button class="btn btn-outline-custom w-100" data-bs-toggle="offcanvas" data-bs-target="#editOffcanvas">
-                                <i class="bi bi-pencil"></i> Editar perfil
-                            </button>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <button class="btn btn-primary-custom dropdown-toggle w-100" type="button" id="dropdownProfileOffcanvas" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ Auth::user()->nome }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end w-100" aria-labelledby="dropdownProfileOffcanvas">
-                                <li><a class="dropdown-item" href="{{ route('usuarios.perfilPublico', Auth::user()->id) }}">Perfil</a></li>
-                                @if(Auth::user()->tipo_usuario == 2 && Auth::user()->portfolioArtista)
-                                    <li><a class="dropdown-item" href="{{ route('perguntas-proposta.index') }}">Formulário de orçamento</a></li>
-                                @endif
-                                <li><a class="dropdown-item" href="{{ route('propostas.minhas') }}">Meus orçamentos</a></li>
-                                <li>
-                                    <form action="{{ route('logout') }}" method="POST">
-                                        @csrf
-                                        <button class="dropdown-item" type="submit">Sair</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    @else
-                        <li class="nav-item mb-2">
-                            <a class="btn btn-primary-custom w-100" data-bs-toggle="modal" data-bs-target="#cadastroModal">Cadastrar-se</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="btn btn-primary-custom w-100" href="{{ route('login') }}">Entrar</a>
-                        </li>
-                    @endauth
-                </ul>
-            </div>
-        </div>
-    </div>
-</nav>
-
-
-<div class="modal fade" id="cadastroModal" tabindex="-1" aria-labelledby="cadastroModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-
-      <div class="modal-body button-group" >
-
-      <li class="botao-nav" id="li-nav"><a class="btn btn-primary-custom ms-3" href="{{ route('usuarios.createArtista') }}">Cadastro Artista</a></li>
-      <li class="botao-nav" id="li-nav"><a class="btn btn-primary-custom ms-3" href="{{ route('usuarios.createContratante') }}">Cadastro Solicitante</a></li>
-
-      </div>
-      </div>
-    </div>
-  </div>
 
 
 
@@ -225,7 +67,8 @@
 
 
         
-        <form method="POST" action="{{ route('usuarios.update', Auth::user()->id) }}" enctype="multipart/form-data" class="text-start" data-address-form>
+        <form method="POST" action="{{ route('usuarios.update', Auth::user()->id) }}" enctype="multipart/form-data" class="text-start" data-address-form
+              data-geocode-url="{{ route('endereco.localizar') }}" data-reverse-url="{{ route('endereco.reverso') }}">
                         @csrf
                         @method('PUT')
 
@@ -252,20 +95,6 @@
                             <input type="text" name="telefone" class="form-control" value="{{ Auth::user()->telefone }}" maxlength="15" inputmode="numeric">
                           </div>
           
-           <div class="mb-3">
-                <label class="form-label">Gênero</label>
-                  <div class="d-flex flex-wrap gap-3">
-            @foreach($generos as $genero)
-                          <div class="form-check">
-                            <input class="form-check-input" type="radio" name="sexo_usuario" id="genero{{ $genero->id }}" value="{{ $genero->id }}"
-                                     {{ Auth::user()->sexo_usuario == $genero->id ? 'checked' : '' }}>
-                            <label class="form-check-label" for="genero{{ $genero->id }}">
-                                      {{ $genero->nome }}
-                  </label>
-                          </div>
-            @endforeach
-                 </div>
-          </div>
             
             <div class="mb-3">
                             <label class="form-label">CEP</label>
@@ -296,7 +125,7 @@
                                 <div class="address-map" data-address-map></div>
                                 <p class="address-map-help">Clique no mapa ou arraste o ponto para ajustar a localização.</p>
                             </div>
-                            <div class="address-map-status mt-1" data-address-status></div>
+                            <div class="address-map-status mt-1" data-address-status aria-live="polite"></div>
                         </div>
 
                         <div class="mb-3">
@@ -348,13 +177,13 @@
     @if(Auth::user()->tipo_usuario == 2)
         @php
             $navPortfolio = Auth::user()->portfolioArtista;
-            $navCategoriasPostPortfolio = $navPortfolio
-                ? $navPortfolio->categoriasPostsPortfolio
-                : collect();
+            $categoriaNovoPost = isset($usuario) && Auth::id() === $usuario->id
+                ? ($categoriaAtiva ?? null)
+                : null;
         @endphp
 
   <div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title  botao_home" id="postModalLabel" style="text-transform: uppercase;">Novo Post</h5>
@@ -367,32 +196,21 @@
 
               <div class="mb-3">
                 <label for="post_modal_nome" class="form-label">Título</label>
-                <input type="text" class="form-control" name="nome" id="post_modal_nome" placeholder="Título do seu post">
+                <input type="text" class="form-control" name="nome" id="post_modal_nome" placeholder="Título do seu post" required maxlength="255">
               </div>
 
 
               <div class="mb-3">
                 <label for="post_modal_descricao" class="form-label">Descrição</label>
-                <textarea class="form-control" name="descricao" id="post_modal_descricao" rows="3" placeholder="Descreva sua obra"></textarea>
+                <textarea class="form-control" name="descricao" id="post_modal_descricao" rows="3" placeholder="Descreva sua obra" required maxlength="1000"></textarea>
               </div>
 
               @if($navPortfolio)
-              <div class="mb-3">
-                <label for="post_modal_id_categoria" class="form-label">Publicar em categoria <span class="text-muted fw-normal">(opcional)</span></label>
-                <select name="id_categoria_post_portfolio" id="post_modal_id_categoria" class="form-select">
-                  <option value="">Sem categoria — aparece na página principal do portfólio</option>
-                  @foreach($navCategoriasPostPortfolio as $cat)
-                    <option value="{{ $cat->id }}">{{ $cat->nome }}</option>
-                  @endforeach
-                </select>
-              </div>
+                @include('usuarios.partials.post_creation_context', ['categoria' => $categoriaNovoPost])
               @endif
 
 
-              <div class="mb-3">
-                <label for="post_modal_imagens" class="form-label">Imagens</label>
-                <input class="form-control" type="file" name="imagens[]" id="post_modal_imagens" multiple accept="image/jpeg,image/png,image/gif,.jpg,.jpeg,.png,.gif">
-              </div>
+              @include('usuarios.partials.post_image_upload', ['inputId' => 'post_modal_imagens'])
 
             
 
@@ -425,33 +243,28 @@
         fetch('/notificacoes')
             .then(response => response.json())
             .then(data => {
-                // Atualiza o dropdown de desktop
-                const listaDesktop = document.getElementById('listaNotificacoesDesktop');
-                const contadorDesktop = document.getElementById('contadorNotificacoesDesktop');
-                updateNotificationDropdown(listaDesktop, contadorDesktop, data);
-
-                // Atualiza o dropdown de mobile
-                const listaMobile = document.getElementById('listaNotificacoesMobile');
-                const contadorMobile = document.getElementById('contadorNotificacoesMobile');
-                updateNotificationDropdown(listaMobile, contadorMobile, data);
+                updateNotificationDropdown(document.getElementById('listaNotificacoes'), document.getElementById('contadorNotificacoes'), data);
             })
             .catch(error => console.error("Erro ao buscar notificações:", error));
     }
 
     // Função auxiliar para atualizar o conteúdo do dropdown
     function updateNotificationDropdown(listaElement, contadorElement, notificacoesData) {
+        if (!listaElement) return;
         listaElement.innerHTML = ''; // Limpa o conteúdo atual
 
         if (notificacoesData.length === 0) {
             listaElement.innerHTML = '<li class="dropdown-item text-muted">Nenhuma nova proposta</li>';
             if (contadorElement) { // Verifica se o contador existe
                 contadorElement.style.display = 'none';
+                contadorElement.hidden = true;
             }
             return;
         }
 
         if (contadorElement) { // Verifica se o contador existe
             contadorElement.innerText = notificacoesData.length;
+            contadorElement.hidden = false;
             contadorElement.style.display = 'inline-block';
         }
 
@@ -634,8 +447,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
   document.addEventListener('hidden.bs.modal', function () {
-      // Força a remoção de "overflow: hidden" do body
-      document.body.style.overflow = 'auto';
+      if (document.querySelector('.modal.show')) {
+          document.body.classList.add('modal-open');
+          document.body.style.overflow = 'hidden';
+      } else {
+          document.body.style.removeProperty('overflow');
+      }
   });
 </script>
 
@@ -644,6 +461,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
+<script src="{{ asset('js/navbar-account.js') }}"></script>
+<script src="{{ asset('js/post-image-upload.js') }}"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </body> 
     </html> 

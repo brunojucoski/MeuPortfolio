@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Models\SexoUsuario;
 use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->scoped(\App\Support\VisualSistema::class);
     }
 
     /**
@@ -22,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
          public function boot()
             {
     View::composer('*', function ($view) {
-        $view->with('generos', SexoUsuario::all());
+        $view->with('visualSistema', app(\App\Support\VisualSistema::class));
     });
             }
 }

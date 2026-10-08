@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\CategoriaArtistica;
-use App\Models\SexoUsuario;
 use App\Models\FeedbackArtista;
 use App\Models\FeedbackContratante;
+use Illuminate\Database\Eloquent\Builder;
 
 
 class UsuarioController extends Controller
@@ -35,12 +35,37 @@ class UsuarioController extends Controller
         return view('usuarios.create', compact('tipos'));
     }
 
-    public function createArtista() {
-        return view('usuarios.cadastro_artista');
+    public function createCadastro(Request $request)
+    {
+        $perfilCadastro = old('perfil_cadastro', $request->query('tipo', 'artista'));
+        if (! in_array($perfilCadastro, ['artista', 'solicitante'], true)) {
+            $perfilCadastro = 'artista';
+        }
+        $artistaOrigemCadastro = $this->artistaOrigemCadastro(
+            $request->old('orcamento_artista', $request->query('orcamento_artista'))
+        );
+        return view('usuarios.cadastro', compact('perfilCadastro', 'artistaOrigemCadastro'));
     }
-    
-    public function createContratante() {
-        return view('usuarios.cadastro_contratante');
+
+    public function createArtista(Request $request) {
+        $request->session()->reflash();
+        return redirect()->route('usuarios.cadastro', ['tipo' => 'artista', 'orcamento_artista' => $request->query('orcamento_artista')]);
+    }
+
+    public function createContratante(Request $request) {
+        $request->session()->reflash();
+        return redirect()->route('usuarios.cadastro', ['tipo' => 'solicitante', 'orcamento_artista' => $request->query('orcamento_artista')]);
+    }
+
+    public function storeCadastro(Request $request)
+    {
+        $data = $request->validate([
+            'perfil_cadastro' => 'required|string|in:artista,solicitante',
+        ], [
+            'perfil_cadastro.required' => 'Selecione o perfil de cadastro.',
+            'perfil_cadastro.in' => 'Selecione artista ou solicitante.',
+        ]);
+        return $this->storeWithTipo($request, $data['perfil_cadastro'] === 'artista' ? 2 : 3);
     }
     
 
@@ -63,7 +88,6 @@ class UsuarioController extends Controller
             'senha' => 'required|string|min:6|confirmed',
             'telefone' => 'nullable|string|max:18',
             'data_nasc' => 'required|date|before:today',
-            'sexo_usuario' => 'required|integer|in:1,2,3',
             'cidade' => 'nullable|string|max:255',
             'cep' => 'nullable|string|max:20',
             'bairro' => 'nullable|string|max:255',
@@ -83,11 +107,10 @@ class UsuarioController extends Controller
             'data_nasc.required' => 'Informe sua data de nascimento.',
             'data_nasc.date' => 'Data de nascimento inválida.',
             'data_nasc.before' => 'A data de nascimento deve ser anterior a hoje.',
-            'sexo_usuario.required' => 'Selecione uma opção de gênero.',
-            'sexo_usuario.in' => 'Selecione uma opção de gênero válida.',
         ]);
+        $artistaOrigemCadastro = $this->artistaOrigemCadastro($request->input('orcamento_artista'));
         $usuario = new Usuario();
-        $usuario->fill($request->except(['senha', 'senha_confirmation']));
+        $usuario->fill($request->except(['senha', 'senha_confirmation', 'orcamento_artista']));
         $usuario->senha = Hash::make($request->senha);
         $usuario->tipo_usuario = $tipoUsuario;
         $usuario->save();
@@ -97,9 +120,18 @@ class UsuarioController extends Controller
         Auth::login($usuario);
         $request->session()->regenerate();
 
-        return redirect()
-            ->route('perfil')
-            ->with('success', 'Conta criada com sucesso! Você já está conectado.');
+        $destino = $artistaOrigemCadastro
+            ? redirect()->route('usuarios.perfilPublico', ['id' => $artistaOrigemCadastro])
+            : redirect()->route('perfil');
+        return $destino->with('success', 'Conta criada com sucesso! Você já está conectado.');
+    }
+
+    private function artistaOrigemCadastro($valor): ?int
+    {
+        if (!is_string($valor) && !is_int($valor)) return null;
+        $id = filter_var($valor, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($id === false) return null;
+        return Usuario::whereKey($id)->where('tipo_usuario', 2)->exists() ? $id : null;
     }
     
 
@@ -113,6 +145,7 @@ class UsuarioController extends Controller
             'portfolioArtista.posts.categoriaPostPortfolio',
             'portfolioArtista.categoriasPostsPortfolio.coverPost.imagens',
             'portfolioArtista.perguntasPropostaContrato',
+            'portfolioArtista.categoriasOrcamento' => fn ($query) => $query->withCount('perguntas'),
             'categoriasArtisticas',
             'todosFeedbacksRecebidosArtista.avaliador',
             'todosFeedbacksRecebidosContratante.avaliador',
@@ -125,14 +158,13 @@ class UsuarioController extends Controller
             abort(404);
         }
 
-        $categorias = CategoriaArtistica::all();
+        $categorias = $this->categoriasDoEditor($usuario);
         $categoriasSelecionadas = $usuario->categoriasArtisticas->pluck('id')->toArray();
-        $generos = SexoUsuario::all();
 
         return view('usuarios.perfil_publico', array_merge(
             $feedbacks,
             $portfolioData,
-            compact('usuario', 'categorias', 'categoriasSelecionadas', 'generos')
+            compact('usuario', 'categorias', 'categoriasSelecionadas')
         ));
     }
 
@@ -145,6 +177,7 @@ class UsuarioController extends Controller
             'portfolioArtista.posts.categoriaPostPortfolio',
             'portfolioArtista.categoriasPostsPortfolio.coverPost.imagens',
             'portfolioArtista.perguntasPropostaContrato',
+            'portfolioArtista.categoriasOrcamento' => fn ($query) => $query->withCount('perguntas'),
             'categoriasArtisticas',
             'todosFeedbacksRecebidosArtista.avaliador',
             'todosFeedbacksRecebidosContratante.avaliador',
@@ -157,14 +190,13 @@ class UsuarioController extends Controller
             abort(404);
         }
 
-        $categorias = CategoriaArtistica::all();
+        $categorias = $this->categoriasDoEditor($usuario);
         $categoriasSelecionadas = $usuario->categoriasArtisticas->pluck('id')->toArray();
-        $generos = SexoUsuario::all();
 
         return view('usuarios.perfil_publico', array_merge(
             $feedbacks,
             $portfolioData,
-            compact('usuario', 'categorias', 'categoriasSelecionadas', 'generos')
+            compact('usuario', 'categorias', 'categoriasSelecionadas')
         ));
     }
 
@@ -176,6 +208,15 @@ class UsuarioController extends Controller
         }
 
         return (int) $q;
+    }
+
+    private function categoriasDoEditor(Usuario $usuario)
+    {
+        if (!session()->hasOldInput('categorias_form')) return $usuario->categoriasArtisticas;
+        $ids = old('categorias', []);
+        if (!is_array($ids)) return collect();
+        $ids = array_slice(array_filter($ids, fn ($id) => (is_int($id) || is_string($id)) && ctype_digit((string) $id)), 0, 100);
+        return CategoriaArtistica::whereIn('id', $ids)->get();
     }
 
     /**
@@ -237,9 +278,8 @@ class UsuarioController extends Controller
         $categorias = CategoriaArtistica::all();
         $categoriasSelecionadas = $usuario->categoriasArtisticas->pluck('id')->toArray();
 
-         $generos = SexoUsuario::all();
     
-        return view('usuarios.perfil_publico', compact('usuario', 'posts', 'categorias', 'categoriasSelecionadas','generos'));
+        return view('usuarios.perfil_publico', compact('usuario', 'posts', 'categorias', 'categoriasSelecionadas'));
     }
 
 
@@ -293,13 +333,11 @@ class UsuarioController extends Controller
         // Sem regra "image": GIF (principalmente animado) falha em alguns ambientes com "image";
         // mime/extension são conferidos por mimes + max em KB.
         'foto_perfil' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:8192',
-        'sexo_usuario' => 'required|integer|exists:sexo_usuario,id',
     ]);
 
     $usuario->nome = $request->nome;
     $usuario->telefone = $request->telefone;
     $usuario->cidade = $request->cidade;
-    $usuario->sexo_usuario = $request->sexo_usuario;
     $usuario->cep = $request->cep;
     $usuario->bairro = $request->bairro;
     $usuario->endereco = $request->endereco;
@@ -355,32 +393,20 @@ class UsuarioController extends Controller
     
 public function listarPublico(Request $request)
 {
-    $query = Usuario::where('tipo_usuario', 2)
-        ->with(['categoriasArtisticas','portfolioArtista.feedbacksRecebidos'])
-        
-        ->whereNotNull('nome');
+    $query = $this->artistasPublicosQuery($request);
 
-    if ($request->filled('categoria')) {
-        $categoriaId = $request->categoria;
-        $query->whereHas('categoriasArtisticas', function ($q) use ($categoriaId) {
-            $q->where('categorias_usuarios.id_categoria', $categoriaId);
-        });
-    }
-
-    if ($request->filled('cidade')) {
-        $query->where('cidade', 'like', '%' . $request->cidade . '%');
-    }
-
-    $artistasMapa = (clone $query)
-        ->whereNotNull('latitude')
-        ->whereNotNull('longitude')
-        ->latest()
-        ->get();
-
-    $usuarios = (clone $query)->latest()->paginate(5)->withQueryString();
+    $usuarios = (clone $query)->with(['categoriasArtisticas', 'portfolioArtista.feedbacksRecebidos'])
+        ->latest()->paginate(5)->withQueryString();
     if ($request->ajax()) {
     return view('partials.lista_usuarios', compact('usuarios'))->render();
 }
+    $primeiraLocalizacao = (clone $query)
+        ->whereBetween('latitude', [-90, 90])
+        ->whereBetween('longitude', [-180, 180])
+        ->orderBy('id')->first(['latitude', 'longitude']);
+    $centroMapa = $primeiraLocalizacao
+        ? [(float) $primeiraLocalizacao->latitude, (float) $primeiraLocalizacao->longitude]
+        : [-14.235, -51.9253];
     $categorias = CategoriaArtistica::all();
   
 
@@ -389,8 +415,99 @@ public function listarPublico(Request $request)
     ->distinct()
     ->pluck('cidade');
 
-    return view('artistas', compact('usuarios', 'categorias', 'cidades', 'artistasMapa'));
+    return view('artistas', compact('usuarios', 'categorias', 'cidades', 'centroMapa'));
 }
+
+    private function artistasPublicosQuery(Request $request): Builder
+    {
+        return Usuario::where('tipo_usuario', 2)->whereNotNull('nome')
+            ->when($request->filled('categoria'), function (Builder $query) use ($request) {
+                $query->whereHas('categoriasArtisticas', function (Builder $categorias) use ($request) {
+                    $categorias->where('categorias_usuarios.id_categoria', $request->categoria);
+                });
+            })
+            ->when($request->filled('cidade'), function (Builder $query) use ($request) {
+                $query->where('cidade', 'like', '%'.$request->cidade.'%');
+            });
+    }
+
+    public function artistasMapa(Request $request)
+    {
+        $dados = $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'categoria' => 'nullable|integer|min:1',
+            'cidade' => 'nullable|string|max:255',
+        ]);
+        $latitude = (float) $dados['latitude'];
+        $longitude = (float) $dados['longitude'];
+        $raioKm = 15;
+        $limite = 200;
+        $angulo = $raioKm / 6371.0088;
+        $deltaLatitude = rad2deg($angulo);
+        $latMin = max(-90, $latitude - $deltaLatitude);
+        $latMax = min(90, $latitude + $deltaLatitude);
+
+        $query = $this->artistasPublicosQuery($request)
+            ->whereBetween('latitude', [$latMin, $latMax])
+            ->whereBetween('longitude', [-180, 180]);
+
+        // The bounding box uses the coordinate index before the exact spherical radius check.
+        if ($latMin > -90 && $latMax < 90) {
+            $deltaLongitude = rad2deg(asin(min(1, sin($angulo) / cos(deg2rad($latitude)))));
+            $lonMin = $longitude - $deltaLongitude;
+            $lonMax = $longitude + $deltaLongitude;
+            $query->where(function (Builder $bounds) use ($lonMin, $lonMax) {
+                if ($lonMin < -180) {
+                    $bounds->where('longitude', '>=', $lonMin + 360)->orWhere('longitude', '<=', $lonMax);
+                } elseif ($lonMax > 180) {
+                    $bounds->where('longitude', '>=', $lonMin)->orWhere('longitude', '<=', $lonMax - 360);
+                } else {
+                    $bounds->whereBetween('longitude', [$lonMin, $lonMax]);
+                }
+            });
+        }
+
+        // Haversine avoids precision loss for artists very close to the search center.
+        $distancia = '(POWER(SIN(RADIANS(latitude - ?) / 2), 2) + COS(RADIANS(?)) * COS(RADIANS(latitude)) * POWER(SIN(RADIANS(longitude - ?) / 2), 2))';
+        $bindings = [$latitude, $latitude, $longitude];
+        $artistas = $query->whereRaw($distancia.' <= (? * 1.0)', [...$bindings, pow(sin($angulo / 2), 2)])
+            ->orderByRaw($distancia.' ASC', $bindings)->orderBy('id')
+            ->with([
+                'categoriasArtisticas',
+                'portfolioArtista' => fn ($portfolio) => $portfolio
+                    ->withAvg('feedbacksRecebidos', 'nota')->withCount('feedbacksRecebidos'),
+            ])
+            ->limit($limite + 1)
+            ->get(['id', 'nome', 'cidade', 'bairro', 'latitude', 'longitude', 'foto_perfil']);
+
+        $payload = $artistas->take($limite)->map(function (Usuario $artista) {
+            $portfolio = $artista->portfolioArtista;
+            $media = $portfolio?->feedbacks_recebidos_avg_nota;
+
+            return [
+                'id' => $artista->id,
+                'nome' => $artista->nome,
+                'nome_artistico' => $portfolio?->nome_artistico,
+                'cidade' => $artista->cidade,
+                'bairro' => $artista->bairro,
+                'latitude' => (float) $artista->latitude,
+                'longitude' => (float) $artista->longitude,
+                'foto' => $artista->foto_perfil ? asset('storage/'.$artista->foto_perfil) : asset('imgs/user.png'),
+                'categorias' => $artista->categoriasArtisticas->pluck('nome')->values(),
+                'perfil_url' => route('usuarios.perfilPublico', $artista->id),
+                'avaliacao_media' => $media ? number_format($media, 1, ',', '.') : null,
+                'avaliacao_total' => $portfolio?->feedbacks_recebidos_count ?? 0,
+            ];
+        })->values();
+
+        return response()->json([
+            'artistas' => $payload,
+            'raio_km' => $raioKm,
+            'limite' => $limite,
+            'tem_mais' => $artistas->count() > $limite,
+        ]);
+    }
 
     
 //listar contratantes no site 

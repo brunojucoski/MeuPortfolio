@@ -15,6 +15,8 @@ class PropostaContrato extends Model
 
     protected $fillable = [
         'id_artista',
+        'id_categoria_orcamento',
+        'categoria_orcamento_nome',
         'id_usuario_avaliador',
         'status',
         'motivo',
@@ -25,6 +27,11 @@ class PropostaContrato extends Model
     public function artista()
     {
         return $this->belongsTo(PortfolioArtista::class, 'id_artista');
+    }
+
+    public function categoriaOrcamento()
+    {
+        return $this->belongsTo(CategoriaOrcamento::class, 'id_categoria_orcamento');
     }
 
     public function usuarioAvaliador()

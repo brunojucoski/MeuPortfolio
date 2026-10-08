@@ -13,6 +13,8 @@ class PortfolioArtista extends Model
     public const ESTILO_CARD_CATEGORIA_3D = 1;
     public const ESTILO_CARD_CATEGORIA_POLAROID = 2;
     public const ESTILO_CARD_CATEGORIA_REVEAL = 3;
+    public const ESTILO_CARD_CATEGORIA_LIVRO = 4;
+    public const ESTILO_CARD_CATEGORIA_PAINEL_3D = 5;
 
     protected $table = 'portfolio_artistas';
 
@@ -22,6 +24,9 @@ class PortfolioArtista extends Model
         'descricao',
         'link_instagram',
         'link_behance',
+        'link_tiktok',
+        'link_github',
+        'link_linkedin',
         'cor_primaria_portfolio',
         'cor_secundaria_portfolio',
         'estilo_card_categorias_portfolio',
@@ -45,6 +50,14 @@ class PortfolioArtista extends Model
             self::ESTILO_CARD_CATEGORIA_REVEAL => [
                 'nome' => 'Reveal',
                 'descricao' => 'Capa com foto e painel branco revelado no hover.',
+            ],
+            self::ESTILO_CARD_CATEGORIA_LIVRO => [
+                'nome' => 'Livro',
+                'descricao' => 'Capa com fotos que se abre para revelar o álbum.',
+            ],
+            self::ESTILO_CARD_CATEGORIA_PAINEL_3D => [
+                'nome' => 'Painel 3D',
+                'descricao' => 'Fotos com painel que gira de baixo para cima.',
             ],
         ];
     }
@@ -72,6 +85,11 @@ class PortfolioArtista extends Model
         return $this->hasMany(PerguntaPropostaContrato::class, 'id_portfolio_artista')
             ->orderBy('ordem')
             ->orderBy('id');
+    }
+
+    public function categoriasOrcamento()
+    {
+        return $this->hasMany(CategoriaOrcamento::class, 'id_portfolio_artista')->orderBy('ordem')->orderBy('id');
     }
 
    public function feedbacks() 

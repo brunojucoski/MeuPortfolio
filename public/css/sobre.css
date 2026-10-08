@@ -1,0 +1,12 @@
+.sobre-page { flex: 1 0 auto; padding: 140px 0 64px; min-height: calc(100svh - 100px); font-family: "Jost", sans-serif; }
+.sobre-page-body .navbar-brand { color: var(--roxo-appolo) !important; }
+.sobre-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+.sobre-image { width: 100%; max-height: 520px; object-fit: contain; }
+.sobre-content h1 { color: var(--roxo-appolo); font-size: 30px; margin-bottom: 24px; overflow-wrap: anywhere; }
+.sobre-texto { font-size: 18px; line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .sobre-page { padding: 124px 0 40px; }
+  .sobre-content { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .sobre-image { max-height: 280px; }
+  .sobre-content h1 { font-size: 26px; }
+}

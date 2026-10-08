@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notificacao;
-use App\Models\PerguntaPropostaContrato;
 use App\Models\PortfolioArtista;
 use App\Models\PropostaContrato;
 use App\Models\RespostaPropostaPergunta;
@@ -11,6 +10,7 @@ use App\Models\TimelinePropostaContrato;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class PropostaContratoController extends Controller
 {
@@ -38,10 +38,15 @@ class PropostaContratoController extends Controller
 
         $portfolio = PortfolioArtista::findOrFail($request->id_artista);
 
-        $perguntas = PerguntaPropostaContrato::where('id_portfolio_artista', $portfolio->id)
-            ->orderBy('ordem')
-            ->orderBy('id')
-            ->get();
+        $categorias = $portfolio->categoriasOrcamento()->whereHas('perguntas')->get();
+        if ($categorias->count() === 1 && ! $request->filled('id_categoria_orcamento')) {
+            $request->merge(['id_categoria_orcamento' => $categorias->first()->id]);
+        }
+        $validatedCategoria = $request->validate([
+            'id_categoria_orcamento' => ['required', 'integer', Rule::in($categorias->pluck('id')->all())],
+        ], ['id_categoria_orcamento' => 'Selecione uma categoria de orçamento deste artista.']);
+        $categoria = $categorias->firstWhere('id', (int) $validatedCategoria['id_categoria_orcamento']);
+        $perguntas = $categoria->perguntas()->where('id_portfolio_artista', $portfolio->id)->get();
 
         if ($perguntas->isEmpty()) {
             return redirect()->back()->with('error', 'Este artista ainda não configurou o formulário de proposta.');
@@ -79,6 +84,8 @@ class PropostaContratoController extends Controller
 
         $proposta = PropostaContrato::create([
             'id_artista' => $portfolio->id,
+            'id_categoria_orcamento' => $categoria->id,
+            'categoria_orcamento_nome' => $categoria->nome,
             'id_usuario_avaliador' => $idAvaliador,
             'status' => 'Aguardando resposta',
         ]);
@@ -414,6 +421,9 @@ class PropostaContratoController extends Controller
         $linhas = [
             'Ola, acabo de lhe enviar uma proposta de orçamento via MeuPortfólio, aqui estão os dados que eu informei :',
         ];
+        if ($proposta->categoria_orcamento_nome) {
+            $linhas[] = 'Categoria: '.$proposta->categoria_orcamento_nome;
+        }
         $sorted = $proposta->respostasPergunta->sortBy(function ($r) {
             $p = $r->pergunta;
 

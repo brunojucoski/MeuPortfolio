@@ -5,15 +5,29 @@
     <title>Perfil Público</title>
     <link href="{{ asset('css/perfil.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/portfolio-cards.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/portfolio-profile-details.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/portfolio-areas.css') }}" rel="stylesheet">
 </head>
 @php
     $portfolio = $usuario->portfolioArtista;
+    $categoriasOrcamentoDisponiveis = $portfolio
+        ? $portfolio->categoriasOrcamento->filter(fn ($categoria) => $categoria->perguntas_count > 0)->values()
+        : collect();
     $corPrimariaPortfolio = preg_match('/^#[0-9A-Fa-f]{6}$/', (string) ($portfolio->cor_primaria_portfolio ?? ''))
         ? $portfolio->cor_primaria_portfolio
-        : '#6d2e2e';
+        : $visualSistema->corBase();
     $corSecundariaPortfolio = preg_match('/^#[0-9A-Fa-f]{6}$/', (string) ($portfolio->cor_secundaria_portfolio ?? ''))
         ? $portfolio->cor_secundaria_portfolio
-        : '#8f4444';
+        : $visualSistema->corSecundaria();
+    $contrasteBotaoOrcamento = static function (string $cor): string {
+        $canais = array_map(static function ($canal) {
+            $valor = $canal / 255;
+            return $valor <= .04045 ? $valor / 12.92 : (($valor + .055) / 1.055) ** 2.4;
+        }, sscanf($cor, '#%02x%02x%02x'));
+        $luminancia = .2126 * $canais[0] + .7152 * $canais[1] + .0722 * $canais[2];
+        return $luminancia > .179 ? '#000000' : '#ffffff';
+    };
     $estilosCardsCategorias = \App\Models\PortfolioArtista::estilosCardsCategorias();
     $estiloCardCategorias = (int) ($portfolio->estilo_card_categorias_portfolio ?? \App\Models\PortfolioArtista::ESTILO_CARD_CATEGORIA_3D);
     $estiloCardCategorias = array_key_exists($estiloCardCategorias, $estilosCardsCategorias)
@@ -135,10 +149,10 @@
                         <img src="{{ $usuario->foto_perfil && file_exists(public_path('storage/' . $usuario->foto_perfil)) ? asset('storage/' . $usuario->foto_perfil) : asset('imgs/user.png') }}" class="rounded-circle  profile-img" alt="Perfil">
                     </div>
                     <div class="col-md-9">
-                        <h1 class="text-nome" style="padding-top: 50px !important">{{ $usuario->nome }} </h1>
+                        <h1 class="text-nome perfil-header-name">{{ $usuario->nome }} </h1>
 
                         @if($usuario->tipo_usuario == 2)
-                            <h3 class="text-nome"> {{ $portfolio->nome_artistico ?? '' }} </h3>
+                            <h3 class="text-nome perfil-header-artist"> {{ $portfolio->nome_artistico ?? '' }} </h3>
                         @endif
 
                         <div class="d-none d-lg-block perfil-dados-resumo">
@@ -169,16 +183,11 @@
                             </div>
                         </div>
 
-                        @if($usuario->tipo_usuario == 2)
                             <div class="social-icons my-3">
-                                <a href="{{$portfolio->link_instagram ?? '' }}" class="text-primary fs-4 me-3 text-decoration-none" target="_blank">
-                                    <i class="bi bi-instagram"></i>
-                                </a>
-                                <a href="{{$portfolio->link_behance ?? ''}}" class="text-primary fs-4 me-3" target="_blank">
-                                    <i class="bi bi-link-45deg"></i>
-                                </a>
+                                @include('usuarios.partials.social_links')
+                                @if($usuario->tipo_usuario == 2)
                                 {{-- DIV DA MÉDIA DE AVALIAÇÕES --}}
-                                <div class="mt-1">
+                                <div class="mt-1 perfil-header-rating">
                                     @php
                                         $feedbacks = $feedbacksParaMedia;
                                         $media = $feedbacks->avg('nota');
@@ -190,13 +199,14 @@
                                         <em>Sem avaliações ainda</em>
                                     @endif
                                 </div>
+                                @endif
                             </div>
-                        @endif
 
+                        <div class="perfil-orcamento-actions" style="--orcamento-texto: {{ $contrasteBotaoOrcamento($corPrimariaPortfolio) }}; --orcamento-texto-hover: {{ $contrasteBotaoOrcamento($corSecundariaPortfolio) }};">
                         @guest
                             @if($usuario->tipo_usuario == 2 && $usuario->portfolioArtista && $usuario->portfolioArtista->perguntasPropostaContrato->count() > 0)
-                                <button type="button" class="btn btn-sm btn-outline-custom" data-bs-toggle="modal" data-bs-target="#modalConviteCadastroSolicitante">
-                                    Enviar orçamento
+                                <button type="button" class="btn btn-primary-custom perfil-orcamento-button" data-bs-toggle="modal" data-bs-target="#modalConviteCadastroSolicitante">
+                                    <i class="bi bi-send" aria-hidden="true"></i><span>Enviar orçamento</span>
                                 </button>
                                
                             @else
@@ -205,20 +215,21 @@
                         @else
                             @if(Auth::user()->tipo_usuario == 3 && $usuario->tipo_usuario == 2)
                                 @if($usuario->portfolioArtista && $usuario->portfolioArtista->perguntasPropostaContrato->count() > 0)
-                                    <button type="button" class="btn btn-sm btn-outline-custom" data-bs-toggle="modal" data-bs-target="#modalPropostaContrato">
-                                        Enviar orçamento
+                                    <button type="button" class="btn btn-primary-custom perfil-orcamento-button" data-bs-toggle="modal" data-bs-target="#modalPropostaContrato">
+                                        <i class="bi bi-send" aria-hidden="true"></i><span>Enviar orçamento</span>
                                     </button>
                                 @elseif($usuario->portfolioArtista)
-                                    <button class="btn btn-sm btn-outline-custom" type="button" disabled title="Este artista ainda não configurou o formulário de proposta.">
-                                        Orçamento indisponível
+                                    <button class="btn btn-primary-custom perfil-orcamento-button" type="button" disabled title="Este artista ainda não configurou o formulário de proposta.">
+                                        <i class="bi bi-file-earmark-lock" aria-hidden="true"></i><span>Orçamento indisponível</span>
                                     </button>
                                 @else
-                                    <button class="btn btn-sm btn-outline-custom" disabled>
-                                        Artista com cadastro incompleto
+                                    <button class="btn btn-primary-custom perfil-orcamento-button" type="button" disabled>
+                                        <i class="bi bi-file-earmark-lock" aria-hidden="true"></i><span>Artista com cadastro incompleto</span>
                                     </button>
                                 @endif
                             @endif
                         @endguest
+                        </div>
 
                         @auth
                             @if(auth()->user()->id === $usuario->id && auth()->user()->tipo_usuario == 2)
@@ -226,9 +237,9 @@
                                     <i class="bi bi-pencil"></i> {{ $portfolio ? 'Editar Portfólio' : 'Criar Portfólio' }}
                                 </button>
                                 @if($portfolio)
-                                    <a href="{{ route('perguntas-proposta.index') }}" class="btn btn-outline-custom ms-1">
-                                        <i class="bi bi-ui-checks"></i> Formulário de orçamento
-                                    </a>
+                                    <button type="button" class="btn btn-primary-custom ms-1" data-portfolio-new-post data-bs-toggle="modal" data-bs-target="#postModal">
+                                        <i class="bi bi-plus-circle" aria-hidden="true"></i> Post
+                                    </button>
                                 @endif
                             @endif
                         @endauth
@@ -237,15 +248,15 @@
                         @if($usuario->tipo_usuario == 2)
                             @if($usuario->categoriasArtisticas && $usuario->categoriasArtisticas->count() > 0)
                                 <div class="mb-3 p-3 perfil-areas-atuacao">
-                                    <label class="form-label">Áreas de atuação : </label>
+                                    <p class="form-label mb-3">Áreas de atuação</p>
                                     <div class="d-flex flex-wrap gap-2">
                                         @foreach ($usuario->categoriasArtisticas as $cat)
-                                            <label class="btn btn-sm btn-outline-custom">{{ $cat->nome }}</label>
+                                            <span class="portfolio-area-tag">{{ $cat->nome }}</span>
                                         @endforeach
                                     </div>
                                 </div>
                             @else
-                                <p class="text-muted">Nenhuma categoria selecionada</p>
+                                <p class="text-muted">Nenhuma área de atuação selecionada</p>
                             @endif
                         @endif
                     </div> {{-- Fim col-md-9 --}}
@@ -265,73 +276,29 @@
             $exibirBlocoPortfolio = $portfolio && $usuario->tipo_usuario == 2;
         @endphp
         @if($exibirBlocoPortfolio)
-            <div class="align-itens-center text-center perfil-portfolio-header">
-                <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
-                    <h3 class="text-nome mb-0"> Portfólio </h3>
+            <div id="portfolio-navigation" data-active-category="{{ $categoriaAtiva?->id ?? '' }}">
+            <section id="portfolio-posts" class="bg-light perfil-posts-section" aria-label="Posts do portfólio" @if(!$categoriaAtiva && $posts->isEmpty()) hidden @endif>
+                <div class="container">
+                    <a href="{{ route('usuarios.perfilPublico', $usuario->id) }}#portfolio-categorias" class="portfolio-back text-simples" data-portfolio-back @if(!$categoriaAtiva) hidden @endif><i class="bi bi-arrow-left" aria-hidden="true"></i> Álbuns</a>
+                    <div class="portfolio-posts-heading mb-3">
+                    <h4 class="text-nome h5 text-center mb-0 portfolio-current-title" tabindex="-1" data-portfolio-title>
+                        <span data-portfolio-title-icon>@include('usuarios.partials.categoria_icone', ['icone' => $categoriaAtiva?->icone])</span>
+                        <span data-portfolio-title-text>{{ $categoriaAtiva?->nome ?? 'Posts' }}</span>
+                    </h4>
                     @auth
-                        @if(Auth::id() === $usuario->id && Auth::user()->tipo_usuario == 2 && $portfolio)
-                            <button type="button" class="btn btn-sm btn-outline-custom" data-bs-toggle="modal" data-bs-target="#categoriasPortfolioModal">
-                                <i class="bi bi-folder-plus"></i> Categorias do Portfólio
+                        @if(auth()->user()->id === $usuario->id && auth()->user()->tipo_usuario == 2)
+                            <button type="button" class="btn btn-primary-custom" data-portfolio-new-post data-bs-toggle="modal" data-bs-target="#postModal">
+                                <i class="bi bi-plus-circle" aria-hidden="true"></i> Post
                             </button>
-                         
                         @endif
                     @endauth
-                </div>
-            </div>
-
-            @if($categoriaAtiva)
-                <div class="container pb-2">
-                    <a href="{{ route('usuarios.perfilPublico', $usuario->id) }}" class="text-simples">&larr; Voltar</a>
-                    <div class="mt-3 text-center">
-                        <h4 class="text-nome">{{ $categoriaAtiva->nome }}</h4>
-                        @if($categoriaAtiva->descricao)
-                            <p class="text-muted mx-auto" style="max-width: 640px;">{{ $categoriaAtiva->descricao }}</p>
-                        @endif
                     </div>
-                </div>
-            @elseif($categoriasPortfolio->isNotEmpty())
-                <section class="py-2 perfil-portfolio-categorias-section">
-                    <div class="container">
-                        <div class="row g-4">
-                            @foreach($categoriasPortfolio as $cat)
-                                @php
-                                    $previewImages = $portfolio->posts
-                                        ->where('id_categoria_post_portfolio', $cat->id)
-                                        ->flatMap(fn ($post) => $post->imagens)
-                                        ->take(3)
-                                        ->values();
-                                @endphp
-                                <div class="col-md-4 perfil-categoria-card-col">
-                                    <a href="{{ route('usuarios.perfilPublico', ['id' => $usuario->id, 'categoria' => $cat->id]) }}"
-                                       class="perfil-categoria-card perfil-categoria-card-estilo-{{ $estiloCardCategorias }}"
-                                       aria-label="Ver categoria {{ $cat->nome }}">
-                                        <span class="perfil-categoria-preview-stack {{ $previewImages->isEmpty() ? 'perfil-categoria-preview-empty' : '' }}" aria-hidden="true">
-                                            @foreach($previewImages as $previewIndex => $previewImage)
-                                                <span class="perfil-categoria-preview-foto perfil-categoria-preview-foto-{{ $previewIndex + 1 }}"
-                                                      style="background-image: url('{{ asset('storage/' . $previewImage->caminho_imagem) }}');"></span>
-                                            @endforeach
-                                        </span>
-                                        <span class="perfil-categoria-overlay" aria-hidden="true"></span>
-                                        <span class="perfil-categoria-title">{{ $cat->nome }}</span>
-                                        <span class="perfil-categoria-description">{{ \Illuminate\Support\Str::limit($cat->descricao ?: 'Ver posts desta categoria', 90) }}</span>
-                                    </a>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </section>
-            @endif
-
-        @if($posts->count() > 0)
-            <section class="bg-light perfil-posts-section">
-                <div class="container">
-                    @if(!$categoriaAtiva && $categoriasPortfolio->isNotEmpty())
-                        <h4 class="text-nome h5 text-center mb-4">Posts</h4>
-                    @endif
+                    <p class="portfolio-category-description text-muted text-center" data-portfolio-description @if(!$categoriaAtiva?->descricao) hidden @endif>{{ $categoriaAtiva?->descricao }}</p>
+                    <p class="visually-hidden" aria-live="polite" data-portfolio-status></p>
                     <div class="row g-4">
-                        @foreach($posts as $post)
-                            <div class="col-md-4">
-                                <div class="card shadow-sm">
+                        @foreach($portfolio->posts as $post)
+                            <div class="col-md-4" data-portfolio-post data-post-category="{{ $post->id_categoria_post_portfolio ?? '' }}" @if(!$posts->contains('id', $post->id)) hidden @endif>
+                                <div class="perfil-post-card">
                                     <div id="carouselPost{{ $post->id }}" class="carousel slide" data-bs-ride="carousel">
                                         <div class="carousel-inner">
                                             @foreach($post->imagens as $index => $img)
@@ -350,6 +317,7 @@
                                             </button>
                                         @endif
                                     </div>
+                                    <button type="button" class="perfil-post-title" data-bs-toggle="modal" data-bs-target="#modalPost{{ $post->id }}">{{ $post->nome }}</button>
                                 </div>
                             </div>
                             {{-- MODAL INDIVIDUAL PARA CADA POST (DEFINIDA AQUI DENTRO DO FOREACH) --}}
@@ -426,13 +394,40 @@
                             </div>
                         @endforeach
                     </div> {{-- Fim row g-4 --}}
+                    <p class="text-center text-muted my-4" data-portfolio-empty @if($posts->isNotEmpty()) hidden @endif>Nenhum post neste álbum ainda.</p>
                 </div> {{-- Fim container --}}
             </section> {{-- Fim section.py-4 bg-light --}}
-        @elseif($categoriaAtiva)
-            <div class="container my-4 text-center text-muted">
-                <p>Nenhum post nesta categoria ainda.</p>
+            @if($categoriasPortfolio->isNotEmpty())
+                <section id="portfolio-categorias" class="py-2 perfil-portfolio-categorias-section" @if($categoriaAtiva) hidden @endif>
+                    <div class="align-itens-center text-center perfil-portfolio-header">
+                        <h3 class="text-nome mb-0">Portfólio</h3>
+                    </div>
+                    <div class="container">
+                        <div class="row g-4">
+                            @foreach($categoriasPortfolio as $cat)
+                                @php
+                                    $previewImages = $portfolio->posts
+                                        ->where('id_categoria_post_portfolio', $cat->id)
+                                        ->flatMap(fn ($post) => $post->imagens)
+                                        ->take(3)
+                                        ->values();
+                                @endphp
+                                <div class="col-md-4 perfil-categoria-card-col">
+                                    <a href="{{ route('usuarios.perfilPublico', ['id' => $usuario->id, 'categoria' => $cat->id]) }}#portfolio-posts"
+                                       class="perfil-categoria-card perfil-categoria-card-estilo-{{ $estiloCardCategorias }}"
+                                       data-portfolio-category="{{ $cat->id }}"
+                                       data-category-name="{{ $cat->nome }}"
+                                       data-category-description="{{ $cat->descricao }}"
+                                       aria-label="Ver álbum {{ $cat->nome }}">
+                                        @include('usuarios.partials.categoria_card_conteudo', ['estiloId' => $estiloCardCategorias, 'imagens' => $previewImages, 'titulo' => $cat->nome, 'icone' => $cat->icone, 'descricao' => \Illuminate\Support\Str::limit($cat->descricao ?: 'Ver posts deste álbum', 90)])
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </section>
+            @endif
             </div>
-        @endif
 
             @auth
                 @if(Auth::user()->id === $usuario->id && Auth::user()->tipo_usuario == 2 && $portfolio && $totalPostsPortfolio === 0)
@@ -441,7 +436,7 @@
                             <div class="card shadow-sm p-4">
                                 <h4 class="mb-3">Você ainda não tem posts</h4>
                                 <p class="text-muted">Comece a compartilhar seu trabalho com o mundo!</p>
-                                <button class="btn btn-outline-custom" data-bs-toggle="modal" data-bs-target="#postModal">
+                                <button class="btn btn-outline-custom" data-portfolio-new-post data-bs-toggle="modal" data-bs-target="#postModal">
                                     <i class="bi bi-plus-circle"></i> Faça seu primeiro post
                                 </button>
                             </div>
@@ -502,10 +497,10 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-0">Para acompanhar melhor seu orçamento gostaria de se cadastrar como solicitante na plataforma?</p>
+                        <p class="mb-0">Para acompanhar melhor seu orçamento e possibilitar avaliar o trabalho do profissional a ser contratado gostaria de se cadastrar na plataforma?</p>
                     </div>
                     <div class="modal-footer flex-wrap gap-2">
-                        <a href="{{ route('usuarios.createContratante') }}" class="btn btn-outline-custom">Sim</a>
+                        <a href="{{ route('usuarios.cadastro', ['tipo' => 'solicitante', 'orcamento_artista' => $usuario->id]) }}" class="btn btn-outline-custom">Sim</a>
                         <button type="button" class="btn btn-outline-secondary" id="btnConviteCadastroNao">Não</button>
                     </div>
                 </div>
@@ -513,9 +508,9 @@
         </div>
 
         {{-- Modal Proposta de Contrato --}}
-        <div class="modal fade p-5 mx-auto modal_proposta" id="modalPropostaContrato" tabindex="-1" role="dialog" aria-labelledby="modalPropostaContratoLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable" style="max-width: 60%; margin: auto;">
-                <form action="{{ route('propostas.store') }}" method="POST" enctype="multipart/form-data">
+        <div class="modal fade modal_proposta" id="modalPropostaContrato" tabindex="-1" role="dialog" aria-labelledby="modalPropostaContratoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+                <form action="{{ route('propostas.store') }}" method="POST" enctype="multipart/form-data" id="formOrcamentoCategorias" class="w-100" data-validation-error="{{ $errors->any() && (int) old('id_artista') === (int) $portfolio->id ? 'true' : 'false' }}">
                     @csrf
                     <input type="hidden" name="id_artista" value="{{ $usuario->portfolioArtista->id }}">
                     <div class="modal-content">
@@ -524,27 +519,38 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                         </div>
                         <div class="modal-body">
-                            <p class="text-muted small">Responda às perguntas definidas pelo profissional que deseja enviar o orçamento.</p>
+                            @if($categoriasOrcamentoDisponiveis->count() > 1)
+                                <label for="categoriaSolicitacaoOrcamento" class="form-label">Selecione a categoria de orçamento</label>
+                                <select name="id_categoria_orcamento" id="categoriaSolicitacaoOrcamento" class="form-select mb-4" required>
+                                    <option value="">Selecione uma categoria</option>
+                                    @foreach($categoriasOrcamentoDisponiveis as $categoria)
+                                        <option value="{{ $categoria->id }}" @selected((string) old('id_categoria_orcamento') === (string) $categoria->id)>{{ $categoria->nome }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <input type="hidden" name="id_categoria_orcamento" id="categoriaSolicitacaoOrcamento" value="{{ $categoriasOrcamentoDisponiveis->first()?->id }}">
+                                <p class="fw-semibold">{{ $categoriasOrcamentoDisponiveis->first()?->nome }}</p>
+                            @endif
                             @foreach($usuario->portfolioArtista->perguntasPropostaContrato as $pergunta)
-                                <div class="mb-4 border-bottom pb-3">
+                                <fieldset class="mb-4 border-bottom pb-3 orcamento-pergunta" data-categoria="{{ $pergunta->id_categoria_orcamento }}" hidden disabled>
                                     <label class="form-label fw-semibold">{{ $pergunta->titulo }}</label>
                                     @if($pergunta->tipo === 'texto')
-                                        <textarea name="respostas[{{ $pergunta->id }}]" class="form-control" rows="3" required></textarea>
+                                        <textarea name="respostas[{{ $pergunta->id }}]" class="form-control" rows="3" required>{{ old('respostas.'.$pergunta->id) }}</textarea>
                                     @elseif($pergunta->tipo === 'opcoes')
                                         @foreach($pergunta->opcoesList() as $idx => $opcao)
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="respostas[{{ $pergunta->id }}]" id="prop{{ $pergunta->id }}_{{ $idx }}" value="{{ $idx }}" {{ $idx === 0 ? 'required' : '' }}>
+                                                <input class="form-check-input" type="radio" name="respostas[{{ $pergunta->id }}]" id="prop{{ $pergunta->id }}_{{ $idx }}" value="{{ $idx }}" {{ $idx === 0 ? 'required' : '' }} @checked((string) old('respostas.'.$pergunta->id, '') === (string) $idx)>
                                                 <label class="form-check-label" for="prop{{ $pergunta->id }}_{{ $idx }}">{{ $opcao }}</label>
                                             </div>
                                         @endforeach
                                     @elseif($pergunta->tipo === 'anexo')
                                         <input type="file" name="anexos[{{ $pergunta->id }}]" class="form-control" required>
                                     @endif
-                                </div>
+                                </fieldset>
                             @endforeach
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-outline-custom">Enviar proposta</button>
+                            <button type="submit" class="btn btn-outline-custom" id="enviarOrcamentoCategoria" disabled>Enviar proposta</button>
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                         </div>
                     </div>
@@ -555,7 +561,7 @@
 
     {{-- Modal de Edição de Post (ÚNICA, FORA DO LOOP DE POSTS) --}}
 <div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <form id="editPostForm" method="POST" action="" enctype="multipart/form-data">
                 @csrf
@@ -579,9 +585,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="edit_id_categoria_post_portfolio" class="form-label">Categoria (opcional)</label>
+                        <label for="edit_id_categoria_post_portfolio" class="form-label">Álbum (opcional)</label>
                         <select name="id_categoria_post_portfolio" id="edit_id_categoria_post_portfolio" class="form-select">
-                            <option value="">Sem categoria</option>
+                            <option value="">Sem álbum</option>
                             @foreach(($categoriasPortfolio ?? collect()) as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->nome }}</option>
                             @endforeach
@@ -596,10 +602,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="edit_imagens" class="form-label">Adicionar Novas Imagens</label>
-                        <input class="form-control" type="file" name="imagens[]" id="edit_imagens" multiple accept="image/jpeg,image/png,image/gif,.jpg,.jpeg,.png,.gif">
-                    </div>
+                    @include('usuarios.partials.post_image_upload', ['inputId' => 'edit_imagens', 'uploadLabel' => 'Adicionar novas imagens'])
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancelar</button>
@@ -632,219 +635,10 @@
     </div>
 </div>
 
-    {{-- Modal Editar/Criar Portfolio --}}
-    <div class="modal fade" id="editModalportfolio" tabindex="-1" aria-labelledby="editModalportfolioLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ $portfolio ? route('portfolio.update', $portfolio->id) : route('portfolio.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="categorias_form" value="1">
-                    @if($portfolio)
-                        @method('PUT')
-                    @endif
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editModalportfolioLabel">
-                            {{ $portfolio ? 'Editar Portfólio' : 'Criar Portfólio' }}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="nome_artistico" class="form-label">Nome Artístico</label>
-                            <input type="text" name="nome_artistico" class="form-control" value="{{ $portfolio->nome_artistico ?? '' }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="descricao" class="form-label">Descrição</label>
-                            <textarea name="descricao" class="form-control">{{ $portfolio->descricao ?? '' }}</textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="link_instagram" class="form-label">Link do Instagram</label>
-                            <input type="text" name="link_instagram" class="form-control" value="{{ $portfolio->link_instagram ?? '' }}">
-                        </div>
-                        <div class="mb-3">
-                            <label for="link_behance" class="form-label">Link Pessoal</label>
-                            <input type="text" name="link_behance" class="form-control" value="{{ $portfolio->link_behance ?? '' }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Cores do perfil</label>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="cor_primaria_portfolio" class="form-label small text-muted mb-1">Cor principal</label>
-                                    <input
-                                        type="color"
-                                        name="cor_primaria_portfolio"
-                                        id="cor_primaria_portfolio"
-                                        class="form-control form-control-color"
-                                        value="{{ $corPrimariaPortfolio }}"
-                                        title="Escolha a cor principal do perfil"
-                                    >
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="cor_secundaria_portfolio" class="form-label small text-muted mb-1">Cor secundaria</label>
-                                    <input
-                                        type="color"
-                                        name="cor_secundaria_portfolio"
-                                        id="cor_secundaria_portfolio"
-                                        class="form-control form-control-color"
-                                        value="{{ $corSecundariaPortfolio }}"
-                                        title="Escolha a cor secundaria do perfil"
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Categorias que você atua</label>
-                            <div class="d-flex flex-wrap gap-2" id="categorias-container" autocomplete="off">
-                                @foreach ($categorias as $categoria)
-                                    <div class="form-check">
-                                        <input
-                                            class="form-check-input"
-                                            type="checkbox"
-                                            name="categorias[]"
-                                            value="{{ $categoria->id }}"
-                                            id="categoria_{{ $categoria->id }}"
-                                            {{ in_array($categoria->id, $categoriasSelecionadas) ? 'checked' : '' }}
-                                        >
-                                        <label class="form-check-label" for="categoria_{{ $categoria->id }}">
-                                            {{ $categoria->nome }}
-                                        </label>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-outline-custom">{{ $portfolio ? 'Salvar Alterações' : 'Criar Portfólio' }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    @include('usuarios.partials.portfolio_editor')
 
     @auth
         @if(Auth::user()->tipo_usuario == 2 && Auth::id() === $usuario->id && $portfolio)
-            <div class="modal fade" id="categoriasPortfolioModal" tabindex="-1" aria-labelledby="categoriasPortfolioModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="categoriasPortfolioModalLabel">Categorias do portfólio</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <ul class="nav nav-tabs perfil-categorias-tabs mb-3" id="categoriasPortfolioTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="categorias-tab" data-bs-toggle="tab" data-bs-target="#categorias-tab-pane" type="button" role="tab" aria-controls="categorias-tab-pane" aria-selected="true">
-                                        Categorias
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="estilo-tab" data-bs-toggle="tab" data-bs-target="#estilo-tab-pane" type="button" role="tab" aria-controls="estilo-tab-pane" aria-selected="false">
-                                        Estilo
-                                    </button>
-                                </li>
-                            </ul>
-
-                            <div class="tab-content" id="categoriasPortfolioTabsContent">
-                                <div class="tab-pane fade show active" id="categorias-tab-pane" role="tabpanel" aria-labelledby="categorias-tab" tabindex="0">
-                                    <div class="perfil-categorias-toolbar">
-                                        <p class="small text-muted mb-0">Opcional: organize posts por tema. Posts sem categoria aparecem na página principal do portfólio.</p>
-                                        <button type="button" class="btn btn-outline-custom btn-sm perfil-categoria-icon-btn" onclick="openNovaCategoriaPortfolioModal()" aria-label="Adicionar categoria">
-                                            <i class="bi bi-plus-lg"></i>
-                                        </button>
-                                    </div>
-
-                                    <div class="perfil-categorias-list">
-                                        <div class="perfil-categorias-list-head">
-                                            <span>Ordem</span>
-                                            <span>Nome da categoria</span>
-                                            <span>Ações</span>
-                                        </div>
-                                        @forelse(($categoriasPortfolio ?? collect()) as $cat)
-                                            <div class="perfil-categorias-list-row">
-                                                <span class="perfil-categorias-list-order">{{ $cat->ordem }}</span>
-                                                <span class="perfil-categorias-list-name">{{ $cat->nome }}</span>
-                                                <span class="perfil-categorias-list-actions">
-                                                    <button
-                                                        type="button"
-                                                        class="btn btn-outline-custom btn-sm perfil-categoria-icon-btn"
-                                                        data-update-url="{{ route('categorias-posts-portfolio.update', $cat) }}"
-                                                        data-categoria-nome="{{ $cat->nome }}"
-                                                        data-categoria-ordem="{{ $cat->ordem }}"
-                                                        data-categoria-descricao="{{ $cat->descricao }}"
-                                                        onclick="openEditCategoriaPortfolioModal(this)"
-                                                        aria-label="Editar categoria {{ $cat->nome }}"
-                                                    >
-                                                        <i class="bi bi-journal-text"></i>
-                                                    </button>
-                                                    <form action="{{ route('categorias-posts-portfolio.destroy', $cat) }}" method="POST" class="d-inline" onsubmit="return confirm('Excluir esta categoria? Os posts ficam sem categoria.');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-outline-danger btn-sm perfil-categoria-icon-btn" aria-label="Excluir categoria {{ $cat->nome }}">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </span>
-                                            </div>
-                                        @empty
-                                            <div class="perfil-categorias-empty">
-                                                Nenhuma categoria cadastrada ainda.
-                                            </div>
-                                        @endforelse
-                                    </div>
-                                </div>
-
-                                <div class="tab-pane fade" id="estilo-tab-pane" role="tabpanel" aria-labelledby="estilo-tab" tabindex="0">
-                                    @php
-                                        $previewEstiloImages = $portfolio->posts
-                                            ->flatMap(fn ($post) => $post->imagens)
-                                            ->take(3)
-                                            ->values();
-                                    @endphp
-                                    <form action="{{ route('portfolio.update', $portfolio->id) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-                                        <p class="small text-muted">Escolha como os cards das categorias aparecem no seu portfólio público.</p>
-                                        <div class="perfil-estilos-grid">
-                                            @foreach($estilosCardsCategorias as $estiloId => $estilo)
-                                                <label class="perfil-estilo-option {{ $estiloCardCategorias === $estiloId ? 'perfil-estilo-option-active' : '' }}" for="estilo_card_categoria_{{ $estiloId }}">
-                                                    <input
-                                                        class="form-check-input"
-                                                        type="radio"
-                                                        name="estilo_card_categorias_portfolio"
-                                                        id="estilo_card_categoria_{{ $estiloId }}"
-                                                        value="{{ $estiloId }}"
-                                                        {{ $estiloCardCategorias === $estiloId ? 'checked' : '' }}
-                                                    >
-                                                    <span class="perfil-estilo-preview-wrap">
-                                                        <span class="perfil-categoria-card perfil-categoria-card-estilo-{{ $estiloId }} perfil-categoria-card-preview">
-                                                            <span class="perfil-categoria-preview-stack {{ $previewEstiloImages->isEmpty() ? 'perfil-categoria-preview-empty' : '' }}" aria-hidden="true">
-                                                                @foreach($previewEstiloImages as $previewIndex => $previewImage)
-                                                                    <span class="perfil-categoria-preview-foto perfil-categoria-preview-foto-{{ $previewIndex + 1 }}"
-                                                                          style="background-image: url('{{ asset('storage/' . $previewImage->caminho_imagem) }}');"></span>
-                                                                @endforeach
-                                                            </span>
-                                                            <span class="perfil-categoria-overlay" aria-hidden="true"></span>
-                                                            <span class="perfil-categoria-title">{{ $estilo['nome'] }}</span>
-                                                            <span class="perfil-categoria-description">{{ $estilo['descricao'] }}</span>
-                                                        </span>
-                                                    </span>
-                                                    <span class="perfil-estilo-option-text">
-                                                        <strong>{{ $estilo['nome'] }}</strong>
-                                                        <small>{{ $estilo['descricao'] }}</small>
-                                                    </span>
-                                                </label>
-                                            @endforeach
-                                        </div>
-                                        <div class="text-end mt-3">
-                                            <button type="submit" class="btn btn-outline-custom btn-sm">Salvar estilo</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div class="modal fade" id="novaCategoriaPortfolioModal" tabindex="-1" aria-labelledby="novaCategoriaPortfolioModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
@@ -852,7 +646,7 @@
                         <form action="{{ route('categorias-posts-portfolio.store') }}" method="POST">
                             @csrf
                             <div class="modal-header">
-                                <h5 class="modal-title" id="novaCategoriaPortfolioModalLabel">Nova categoria</h5>
+                                <h5 class="modal-title" id="novaCategoriaPortfolioModalLabel">Novo álbum</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
@@ -868,6 +662,7 @@
                                     <label class="form-label">Descrição (opcional)</label>
                                     <textarea name="descricao" class="form-control" rows="3"></textarea>
                                 </div>
+                                @include('usuarios.partials.categoria_icon_picker', ['pickerId' => 'nova_categoria_icone'])
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -885,7 +680,7 @@
                             @csrf
                             @method('PUT')
                             <div class="modal-header">
-                                <h5 class="modal-title" id="editarCategoriaPortfolioModalLabel">Editar categoria</h5>
+                                <h5 class="modal-title" id="editarCategoriaPortfolioModalLabel">Editar álbum</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
@@ -901,6 +696,7 @@
                                     <label for="editar_categoria_portfolio_descricao" class="form-label">Descrição</label>
                                     <textarea name="descricao" id="editar_categoria_portfolio_descricao" class="form-control" rows="3"></textarea>
                                 </div>
+                                @include('usuarios.partials.categoria_icon_picker', ['pickerId' => 'editar_categoria_icone'])
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -913,7 +709,7 @@
         @endif
     @endauth
 
-    {{-- Modal #postModal fica no navbar (Components/navbarbootstrap) — inclui categoria opcional; evita IDs duplicados --}}
+    {{-- A modal #postModal fica no navbar; a categoria acompanha a navegação do portfólio. --}}
 
 </main>
 
@@ -938,6 +734,7 @@
 
         // Define a action do formulário para a rota de update
         const editForm = document.getElementById('editPostForm');
+        editForm.querySelector('[data-post-image-upload]')?.dispatchEvent(new Event('post-images-reset'));
         editForm.action = `/posts/${postId}`; 
 
        
@@ -996,6 +793,10 @@
         nome.value = button.dataset.categoriaNome || '';
         ordem.value = button.dataset.categoriaOrdem || 0;
         descricao.value = button.dataset.categoriaDescricao || '';
+        form.querySelectorAll('input[name="icone"]').forEach(input => {
+            input.checked = input.value === (button.dataset.categoriaIcone || '');
+        });
+        form.querySelector('[data-icon-picker]')?.dispatchEvent(new Event('icon-picker-sync'));
 
         bootstrap.Modal.getOrCreateInstance(document.getElementById('editarCategoriaPortfolioModal')).show();
     }
@@ -1005,7 +806,7 @@
         if (!modalEl) return;
 
         modalEl.addEventListener('hidden.bs.modal', function () {
-            if (document.querySelector('#categoriasPortfolioModal.show')) {
+            if (document.querySelector('#editModalportfolio.show')) {
                 document.body.classList.add('modal-open');
             }
         });
@@ -1031,5 +832,10 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
+<script src="{{ asset('js/orcamento-categorias.js') }}"></script>
+<script src="{{ asset('js/portfolio-navigation.js') }}"></script>
+<script src="{{ asset('js/portfolio-category-icons.js') }}"></script>
+<script src="{{ asset('js/portfolio-settings.js') }}"></script>
+<script src="{{ asset('js/portfolio-areas.js') }}"></script>
 </body>
 </html>

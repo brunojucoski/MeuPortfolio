@@ -16,6 +16,7 @@ class CategoriaPostPortfolio extends Model
         'nome',
         'descricao',
         'ordem',
+        'icone',
     ];
 
     protected $casts = [

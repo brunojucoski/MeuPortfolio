@@ -152,6 +152,9 @@
                 @php $semCadastroVisitante = $proposta->ehPropostaSemIdentificacao(); @endphp
                 <div class="card-proposta">
                     <h5>Proposta #{{ $proposta->id }}</h5>
+                    @if($proposta->categoria_orcamento_nome)
+                        <p class="mb-2"><strong>Categoria:</strong> {{ $proposta->categoria_orcamento_nome }}</p>
+                    @endif
                     <p class="text-muted small mb-2">Enviada em {{ $proposta->created_at->format('d/m/Y H:i') }}</p>
                     <p><strong>Status:</strong> <span class="status-label">{{ $proposta->status }}</span></p>
 

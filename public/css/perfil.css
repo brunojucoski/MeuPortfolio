@@ -551,6 +551,10 @@ main {
   padding-bottom: 1rem !important;
 }
 
+.perfil-publico-page .perfil-header-name {
+  padding-top: 50px;
+}
+
 .perfil-publico-page .perfil-areas-atuacao {
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
@@ -707,7 +711,8 @@ main {
 
 .perfil-publico-page .perfil-categoria-card-estilo-1:hover .perfil-categoria-overlay,
 .perfil-publico-page .perfil-categoria-card-estilo-1:focus .perfil-categoria-overlay {
-  background: rgba(109, 46, 46, 0.5);
+  background: color-mix(in srgb, var(--roxo-appolo) 70%, white 30%);
+  opacity: 0.5;
 }
 
 .perfil-publico-page .perfil-categoria-card-estilo-2 {
@@ -799,7 +804,7 @@ main {
 }
 
 .perfil-publico-page .perfil-categoria-card-estilo-3 .perfil-categoria-overlay {
-  background: rgba(109, 46, 46, 0.34);
+  background: color-mix(in srgb, var(--roxo-appolo) 34%, transparent);
 }
 
 .perfil-publico-page .perfil-categoria-card-estilo-3 .perfil-categoria-title {
@@ -961,7 +966,7 @@ main {
 .perfil-publico-page .perfil-estilo-option:hover,
 .perfil-publico-page .perfil-estilo-option:has(input:checked) {
   border-color: var(--roxo-appolo);
-  box-shadow: 0 0 0 3px rgba(109, 46, 46, 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--roxo-appolo) 12%, transparent);
 }
 
 .perfil-publico-page .perfil-estilo-preview-wrap {
@@ -1010,6 +1015,28 @@ main {
 }
 
 @media (max-width: 767.98px) {
+  .perfil-publico-page {
+    padding-top: 100px;
+  }
+
+  .perfil-publico-page .perfil-header-section {
+    padding-top: 8px !important;
+  }
+
+  .perfil-publico-page .perfil-header-name {
+    padding-top: 0;
+    text-align: center;
+  }
+
+  .perfil-publico-page .perfil-header-artist,
+  .perfil-publico-page .perfil-areas-atuacao {
+    text-align: center;
+  }
+
+  .perfil-publico-page .perfil-areas-atuacao > .d-flex {
+    justify-content: center;
+  }
+
   .perfil-publico-page .perfil-categoria-card-col {
     min-height: 290px;
   }
