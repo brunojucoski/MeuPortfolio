@@ -8,6 +8,7 @@
     <link href="{{ asset('css/portfolio-cards.css') }}" rel="stylesheet">
     <link href="{{ asset('css/portfolio-profile-details.css') }}" rel="stylesheet">
     <link href="{{ asset('css/portfolio-areas.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/portfolio-export.css') }}" rel="stylesheet">
 </head>
 @php
     $portfolio = $usuario->portfolioArtista;
@@ -636,6 +637,7 @@
 </div>
 
     @include('usuarios.partials.portfolio_editor')
+    @include('usuarios.partials.portfolio_export')
 
     @auth
         @if(Auth::user()->tipo_usuario == 2 && Auth::id() === $usuario->id && $portfolio)
@@ -837,5 +839,6 @@
 <script src="{{ asset('js/portfolio-category-icons.js') }}"></script>
 <script src="{{ asset('js/portfolio-settings.js') }}"></script>
 <script src="{{ asset('js/portfolio-areas.js') }}"></script>
+<script src="{{ asset('js/portfolio-export.js') }}"></script>
 </body>
 </html>

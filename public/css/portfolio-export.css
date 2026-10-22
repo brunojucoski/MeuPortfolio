@@ -1,0 +1,30 @@
+.portfolio-export-action { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+.portfolio-export-action .btn { white-space: normal; min-height: 44px; }
+#portfolioExportModal [hidden] { display: none !important; }
+#portfolioExportModal .modal-footer .btn { min-height: 44px; }
+.portfolio-export-section { border: 0; padding: 0 0 20px; margin: 0 0 20px; border-bottom: 1px solid #e5e7eb; min-width: 0; }
+.portfolio-export-section > legend, .portfolio-export-toolbar h6 { float: none; font-size: 16px; font-weight: 600; margin: 0 0 12px; }
+.portfolio-export-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; }
+.portfolio-export-fields label, .portfolio-export-group legend label { display: flex; gap: 10px; align-items: center; min-height: 44px; cursor: pointer; min-width: 0; }
+#portfolioExportModal input[type="checkbox"] { width: 20px; height: 20px; flex: 0 0 20px; accent-color: var(--roxo-appolo, #6d2e2e); }
+#portfolioExportModal input:focus-visible { outline: 2px solid var(--roxo-appolo, #6d2e2e); outline-offset: 3px; }
+.portfolio-export-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.portfolio-export-toolbar h6 { margin: 0; }
+.portfolio-export-toolbar > div { display: flex; gap: 8px; }
+.portfolio-export-toolbar .btn { min-height: 44px; }
+.portfolio-export-group { margin: 0 0 16px; padding: 0; border: 0; min-width: 0; }
+.portfolio-export-group legend { float: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; border-bottom: 1px solid #e5e7eb; margin-bottom: 4px; padding-bottom: 4px; }
+.portfolio-export-count { color: #68707a; font-size: 12px; white-space: nowrap; }
+.portfolio-export-post { display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 8px 0; cursor: pointer; border-bottom: 1px solid #f0f1f3; }
+.portfolio-export-post img, .portfolio-export-placeholder { width: 56px; height: 56px; flex: 0 0 56px; object-fit: cover; border-radius: 5px; background: #f2f3f5; }
+.portfolio-export-placeholder { display: grid; place-items: center; color: #68707a; }
+.portfolio-export-post-text { min-width: 0; }
+.portfolio-export-post-text strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.portfolio-export-post-text small { color: #68707a; font-size: 12px; }
+.portfolio-export-group legend label span, .portfolio-export-fields label span { overflow-wrap: anywhere; }
+.portfolio-export-status { color: #68707a; font-size: 13px; margin-bottom: 0; }
+#portfolioExportModal [data-export-error], #portfolioExportModal [data-export-download] { margin-top: 12px; }
+@media (max-width: 420px) {
+    .portfolio-export-fields { grid-template-columns: minmax(0, 1fr); }
+    .portfolio-export-toolbar > div { flex-wrap: wrap; }
+}

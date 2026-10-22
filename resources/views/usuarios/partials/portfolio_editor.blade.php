@@ -64,6 +64,13 @@
                                         </div>
                                     @endforeach
                                 </div>
+                                @if($portfolio)
+                                    <div class="portfolio-export-action">
+                                        <button type="button" class="btn btn-outline-custom" data-portfolio-export-open>
+                                            <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Exportar portfólio em pdf
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                             <div class="tab-pane fade" id="portfolio-categories-pane" role="tabpanel" aria-labelledby="portfolio-categories-tab" tabindex="0">
                                 @include('usuarios.partials.areas_atuacao_picker')

@@ -15,13 +15,7 @@
 /* Evita sobrepor estilos globais do Bootstrap fora da home */
 .home-page-main {
   font-family: "Jost", sans-serif;
-  padding-top: 110px;
-}
-
-@media (max-width: 991px) {
-  .home-page-main {
-    padding-top: 100px;
-  }
+  padding-top: 0;
 }
 
 .text-purple {
@@ -38,6 +32,7 @@
 .home-hero {
   background: #000;
   isolation: isolate;
+  padding-top: 110px;
 }
 
 .home-hero-content {
@@ -154,6 +149,10 @@
 }
 
 @media (max-width: 991px) {
+  .home-hero {
+    padding-top: 100px;
+  }
+
   .home-hero-content {
     min-height: 0;
     padding-top: 56px;

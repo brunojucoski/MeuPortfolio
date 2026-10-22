@@ -100,6 +100,8 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:120,1')->name('areas-atuacao.buscar');
     Route::post('/areas-atuacao', [\App\Http\Controllers\AreaAtuacaoController::class, 'store'])
         ->middleware('throttle:20,1')->name('areas-atuacao.store');
+    Route::post('/portfolio/{portfolio}/exportar-pdf', [\App\Http\Controllers\PortfolioPdfController::class, 'store'])
+        ->middleware('throttle:5,1')->name('portfolio.exportar-pdf');
     Route::resource('portfolio', PortfolioArtistaController::class)->except(['show']);
 });
 

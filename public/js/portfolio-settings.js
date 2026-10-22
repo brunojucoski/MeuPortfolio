@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applyPreview();
     });
     modal.addEventListener('hidden.bs.modal', () => {
+        if (modal.dataset.portfolioExporting === 'true') return;
         // Keep the public profile unchanged until the artist saves the settings.
         form?.reset();
         inputs.forEach((input, index) => { input.value = originalColors[index]; });
