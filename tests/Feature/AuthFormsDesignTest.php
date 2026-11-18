@@ -41,6 +41,7 @@ class AuthFormsDesignTest extends TestCase
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
+        (require database_path('migrations/2026_11_18_000000_add_privacy_and_terms_to_usuarios.php'))->up();
     }
 
     private function xpath(string $html): \DOMXPath
@@ -144,7 +145,123 @@ class AuthFormsDesignTest extends TestCase
             'cep' => '88801001', 'cidade' => 'Criciuma', 'bairro' => 'Centro',
             'endereco' => 'Rua de teste', 'latitude' => -28.6775, 'longitude' => -49.3697,
             'perfil_cadastro' => $type === 2 ? 'artista' : 'solicitante', 'tipo_usuario' => 1,
+            'compartilhar_localizacao' => 1, 'aceite_termos' => 1,
         ];
+    }
+
+    public function test_registration_requires_explicit_terms_acceptance_including_legacy_routes(): void
+    {
+        $payload = $this->registrationPayload();
+        unset($payload['aceite_termos']);
+        foreach (['/cadastro', '/cadastro/artista', '/cadastro/contratante', '/usuarios/artista', '/usuarios/contratante', '/register'] as $route) {
+            $this->postJson($route, $payload)->assertUnprocessable()->assertJsonValidationErrors('aceite_termos');
+        }
+        foreach ([0, '0', false, ['1']] as $invalidAcceptance) {
+            $this->postJson('/cadastro', $payload + ['aceite_termos' => $invalidAcceptance])->assertUnprocessable()->assertJsonValidationErrors('aceite_termos');
+        }
+        $this->assertDatabaseCount('usuarios', 0);
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+        $this->assertGuest();
+        $this->get('/register')->assertRedirect(route('usuarios.cadastro'));
+    }
+
+    public function test_registration_without_location_keeps_city_and_records_server_owned_terms_acceptance(): void
+    {
+        $payload = $this->registrationPayload(2);
+        foreach (['cep', 'bairro', 'endereco', 'latitude', 'longitude', 'compartilhar_localizacao'] as $field) unset($payload[$field]);
+        $payload += ['termos_versao' => 'forjada', 'termos_aceitos_em' => '1900-01-01', 'localizacao_autorizada_em' => '1900-01-01'];
+        $this->post(route('usuarios.cadastrar'), $payload)->assertSessionHasNoErrors();
+        $user = Usuario::firstOrFail();
+        $this->assertFalse($user->compartilhar_localizacao);
+        $this->assertNull($user->latitude);
+        $this->assertNull($user->longitude);
+        $this->assertNull($user->endereco);
+        $this->assertNull($user->localizacao_autorizada_em);
+        $this->assertSame('Criciuma', $user->cidade);
+        $this->assertSame(\App\Support\TermosUso::VERSAO, $user->termos_versao);
+        $this->assertTrue($user->termos_aceitos_em->isToday());
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_location_requires_a_valid_coordinate_pair_only_when_explicitly_enabled(): void
+    {
+        $payload = $this->registrationPayload();
+        unset($payload['longitude']);
+        $this->postJson(route('usuarios.cadastrar'), $payload)->assertUnprocessable()->assertJsonValidationErrors('longitude');
+        $payload['compartilhar_localizacao'] = 0;
+        $payload['latitude'] = ['invalid'];
+        $payload['longitude'] = 999;
+        $this->post(route('usuarios.cadastrar'), $payload)->assertSessionHasNoErrors();
+        $this->assertNull(Usuario::firstOrFail()->latitude);
+        $this->assertNull(Usuario::firstOrFail()->longitude);
+    }
+
+    public function test_owner_can_disable_location_without_an_address_or_change_to_terms_record(): void
+    {
+        $user = Usuario::create(['nome' => 'Artista', 'tipo_usuario' => 2, 'cidade' => 'Criciuma', 'compartilhar_localizacao' => true, 'latitude' => -28.6, 'longitude' => -49.3]);
+        $user->termos_aceitos_em = now()->subDay(); $user->termos_versao = '2026-11-18'; $user->save();
+        $acceptedAt = $user->termos_aceitos_em->toISOString();
+        $url = route('usuarios.update', $user);
+        $this->actingAs($user)->put($url, ['nome' => 'Artista', 'compartilhar_localizacao' => 0, 'termos_versao' => 'forjada', 'latitude' => -28, 'longitude' => -49])->assertSessionHasNoErrors();
+        $saved = $user->fresh();
+        $this->assertFalse($saved->compartilhar_localizacao);
+        $this->assertNull($saved->latitude);
+        $this->assertNull($saved->longitude);
+        $this->assertNull($saved->localizacao_autorizada_em);
+        $this->assertSame('Criciuma', $saved->cidade);
+        $this->assertSame($acceptedAt, $saved->termos_aceitos_em->toISOString());
+        $this->assertSame('2026-11-18', $saved->termos_versao);
+        $this->put($url, ['nome' => 'Artista', 'compartilhar_localizacao' => 1, 'latitude' => -28.6, 'longitude' => -49.3])->assertSessionHasNoErrors();
+        $this->assertTrue($user->fresh()->compartilhar_localizacao);
+        $this->assertNotNull($user->fresh()->localizacao_autorizada_em);
+    }
+
+    public function test_other_users_and_guests_cannot_change_location_consent(): void
+    {
+        $owner = Usuario::create(['nome' => 'Artista', 'tipo_usuario' => 2]);
+        $url = route('usuarios.update', $owner);
+        $this->putJson($url, ['nome' => 'Outro', 'compartilhar_localizacao' => 1])->assertForbidden();
+        $other = Usuario::create(['nome' => 'Outro', 'tipo_usuario' => 3]);
+        $this->actingAs($other)->putJson($url, ['nome' => 'Outro', 'compartilhar_localizacao' => 1])->assertForbidden();
+        $this->assertFalse($owner->fresh()->compartilhar_localizacao);
+    }
+
+    public function test_private_address_is_only_visible_to_its_owner_until_sharing_is_enabled(): void
+    {
+        $user = Usuario::create(['nome' => 'Artista', 'tipo_usuario' => 2, 'cep' => '88801001', 'endereco' => 'Rua privada', 'bairro' => 'Bairro privado', 'latitude' => -28.6, 'longitude' => -49.3]);
+        $this->view('usuarios.partials.endereco_publico', ['usuario' => $user])->assertDontSee('Rua privada')->assertDontSee('Bairro privado')->assertDontSee('88801-001');
+        $this->actingAs($user);
+        $this->view('usuarios.partials.endereco_publico', ['usuario' => $user])->assertSee('Rua privada');
+        \Illuminate\Support\Facades\Auth::logout();
+        $user->compartilhar_localizacao = true;
+        $this->view('usuarios.partials.endereco_publico', ['usuario' => $user])->assertSee('Rua privada')->assertSee('88801-001');
+        $this->assertArrayNotHasKey('latitude', $user->toArray());
+        $this->assertArrayNotHasKey('longitude', $user->toArray());
+    }
+
+    public function test_terms_are_public_and_both_consents_start_unchecked_and_separate(): void
+    {
+        $this->get(route('termos-uso'))->assertOk()->assertSee('sem finalidade lucrativa')->assertSee('responsabilidades e os deveres')->assertSee(\App\Support\TermosUso::VERSAO);
+        $html = $this->get('/cadastro')->assertOk()->getContent();
+        $xpath = $this->xpath($html);
+        $this->assertSame(1, $xpath->query('//input[@name="aceite_termos" and @required and not(@checked)]')->length);
+        $this->assertSame(1, $xpath->query('//input[@data-location-sharing and not(@checked)]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-location-map-panel and @hidden]')->length);
+        $this->assertSame(0, $xpath->query('//input[@name="cep" or @name="bairro" or @name="endereco" or @name="cidade"][@required]')->length);
+    }
+
+    public function test_privacy_migration_does_not_grandfather_sharing_or_fabricate_acceptance(): void
+    {
+        $migration = require database_path('migrations/2026_11_18_000000_add_privacy_and_terms_to_usuarios.php');
+        $migration->down();
+        $user = Usuario::create(['nome' => 'Anterior', 'tipo_usuario' => 2, 'latitude' => -28.6, 'longitude' => -49.3]);
+        $migration->up();
+        $this->assertFalse($user->fresh()->compartilhar_localizacao);
+        $this->assertNull($user->fresh()->termos_aceitos_em);
+        $this->assertNull($user->fresh()->termos_versao);
+        $this->assertSame('-28.60000000', $user->fresh()->latitude);
+        $migration->down();
+        $this->assertSame('-49.30000000', $user->fresh()->longitude);
     }
 
     private function register(string $route, int $type): void
@@ -181,7 +298,7 @@ class AuthFormsDesignTest extends TestCase
     {
         $artist = Usuario::create(['nome' => 'Artista de origem', 'tipo_usuario' => 2]);
         $url = route('usuarios.cadastro', ['tipo' => 'solicitante', 'orcamento_artista' => $artist->id]);
-        $response = $this->get($url)->assertOk()->assertSee('Cadastro de solicitante');
+        $response = $this->get($url)->assertOk()->assertSee('Cadastro de cliente');
         $xpath = $this->xpath($response->getContent());
         $this->assertSame((string) $artist->id, $xpath->query('//form[@id="form-cadastro"]//input[@name="orcamento_artista" and @type="hidden"]')->item(0)->getAttribute('value'));
         $this->post(route('usuarios.cadastrar'), $this->registrationPayload() + ['orcamento_artista' => $artist->id])
@@ -199,7 +316,7 @@ class AuthFormsDesignTest extends TestCase
         $this->from(route('usuarios.cadastro'))->post(route('usuarios.cadastrar'), [
             'perfil_cadastro' => 'solicitante', 'nome' => 'Pessoa', 'orcamento_artista' => $artist->id,
         ])->assertSessionHasErrors(['documento', 'senha']);
-        $response = $this->get(route('usuarios.cadastro'))->assertOk()->assertSee('Cadastro de solicitante');
+        $response = $this->get(route('usuarios.cadastro'))->assertOk()->assertSee('Cadastro de cliente');
         $this->assertSame((string) $artist->id, $this->xpath($response->getContent())->query('//input[@name="orcamento_artista"]')->item(0)->getAttribute('value'));
         $this->assertGuest();
         $this->post(route('usuarios.cadastrar'), $this->registrationPayload(2) + ['orcamento_artista' => $artist->id])
@@ -267,7 +384,7 @@ class AuthFormsDesignTest extends TestCase
         $this->from(route('usuarios.cadastro'))->post(route('usuarios.cadastrar'), [
             'perfil_cadastro' => 'solicitante', 'nome' => 'Pessoa de teste', 'email' => 'teste@example.test',
         ])->assertRedirect(route('usuarios.cadastro'))->assertSessionHasErrors(['documento', 'data_nasc', 'senha']);
-        $response = $this->get(route('usuarios.cadastro'))->assertOk()->assertSee('Cadastro de solicitante');
+        $response = $this->get(route('usuarios.cadastro'))->assertOk()->assertSee('Cadastro de cliente');
         $xpath = $this->xpath($response->getContent());
         $this->assertSame(1, $xpath->query('//select[@name="perfil_cadastro"]/option[@value="solicitante" and @selected]')->length);
         $this->assertSame(1, $xpath->query('//input[@id="cadastro-profile-switch" and @checked]')->length);
@@ -318,6 +435,7 @@ class AuthFormsDesignTest extends TestCase
         $this->actingAs($user)->put(route('usuarios.update', $user->id), [
             'nome' => 'Pessoa atualizada', 'sexo_usuario' => 2,
             'cep' => '88801-001', 'latitude' => -28.6775, 'longitude' => -49.3697,
+            'compartilhar_localizacao' => 1,
         ])->assertSessionHasNoErrors()->assertRedirect();
         $this->assertSame('Pessoa atualizada', $user->fresh()->nome);
         $this->assertSame('-28.67750000', $user->fresh()->latitude);

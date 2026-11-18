@@ -8,6 +8,7 @@
     <link href="{{ asset('css/cadastro.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('css/auth-forms.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/google-auth.css') }}" rel="stylesheet">
 </head>
 <body class="auth-page auth-login-page">
 
@@ -77,11 +78,22 @@
             <button type="submit" class="submit-btn">Entrar</button>
         </form>
 
+        <div class="google-auth-actions">
+            @if(\App\Support\GoogleOAuth::configured())
+                <form id="googleLoginForm" method="POST" action="{{ route('google.redirect') }}">
+                    @csrf
+                    <input type="hidden" name="mode" value="login">
+                    @include('auth.partials.google-button', ['googleForm' => 'googleLoginForm'])
+                </form>
+            @else
+                @include('auth.partials.google-button')
+            @endif
+        </div>
         <hr class="my-4 opacity-25">
 
         <div class="auth-signup-actions">
             <a href="{{ route('usuarios.cadastro', ['tipo' => 'artista']) }}" class="cadastro-button">Cadastro artista</a>
-            <a href="{{ route('usuarios.cadastro', ['tipo' => 'solicitante']) }}" class="cadastro-button">Cadastro solicitante</a>
+            <a href="{{ route('usuarios.cadastro', ['tipo' => 'solicitante']) }}" class="cadastro-button">Cadastro de cliente</a>
         </div>
     </div>
 </main>

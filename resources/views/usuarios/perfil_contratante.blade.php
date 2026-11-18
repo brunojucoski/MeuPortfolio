@@ -58,7 +58,8 @@
     @include('Components.navbarbootstrap')
 
     <div class="profile-container">
-        <form method="POST" action="{{ route('usuarios.update', $usuario->id) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('usuarios.update', $usuario->id) }}" enctype="multipart/form-data" data-address-form
+              data-geocode-url="{{ route('endereco.localizar') }}" data-reverse-url="{{ route('endereco.reverso') }}">
             @csrf
             @method('PUT')
 
@@ -87,6 +88,10 @@
                     <input type="text" name="cidade" class="form-control" value="{{ $usuario->cidade }}">
                 </div>
 
+                @include('usuarios.partials.location_consent', ['locationConsentId' => 'solicitante-compartilhar-localizacao', 'locationUser' => $usuario])
+                <input type="hidden" name="latitude" value="{{ $usuario->latitude }}">
+                <input type="hidden" name="longitude" value="{{ $usuario->longitude }}">
+
                 <div class="mb-3">
                     <label class="form-label">Endereço</label>
                     <input type="text" name="endereco" class="form-control" value="{{ $usuario->endereco }}">
@@ -100,6 +105,10 @@
                 <div class="mb-3">
                     <label class="form-label">CEP</label>
                     <input type="text" name="cep" class="form-control" value="{{ $usuario->cep }}">
+                </div>
+                <div class="mb-3" data-location-map-panel @if(!in_array(old('compartilhar_localizacao', $usuario->compartilhar_localizacao), [1, '1', true], true)) hidden @endif>
+                    <div class="address-map-card"><div class="address-map" data-address-map aria-label="Localização do trabalho"></div></div>
+                    <div class="address-map-status" data-address-status aria-live="polite"></div>
                 </div>
 
                 <div class="mb-3">

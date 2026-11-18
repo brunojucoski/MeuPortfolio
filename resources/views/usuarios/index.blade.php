@@ -19,7 +19,7 @@
                 <tr>
                     <td>{{ $usuario->nome }}</td>
                     <td>{{ $usuario->email }}</td>
-                    <td>{{ $usuario->tipo->nome ?? 'Sem tipo' }}</td>
+                    <td>{{ \App\Support\NomenclaturaPublica::clientes($usuario->tipo->nome ?? 'Sem tipo') }}</td>
                     <td>
                         <a href="{{ route('usuarios.edit', $usuario->id) }}" class="btn btn-sm btn-warning">Editar</a>
                         

@@ -11,5 +11,6 @@ class ConfiguracaoSistema extends Model
     protected $fillable = [
         'cor_base', 'sobre_titulo', 'sobre_texto', 'imagem_login', 'imagem_logo',
         'imagem_cadastro_artista', 'imagem_cadastro_solicitante', 'imagem_sobre', 'atualizado_por',
+        'termos_responsavel', 'termos_contato_email',
     ];
 }

@@ -17,6 +17,10 @@
     return form.querySelector(`[name="${name}"]`);
   }
 
+  function locationEnabled(form) {
+    return form.querySelector('[data-location-sharing]')?.checked === true;
+  }
+
   function stateFor(form) {
     if (!states.has(form)) states.set(form, { version: 0, lastCep: null });
     return states.get(form);
@@ -69,6 +73,7 @@
   }
 
   function setCoords(form, lat, lng, context) {
+    if (!locationEnabled(form)) return false;
     if (!validCoords(lat, lng)) return false;
     if (field(form, 'latitude')) field(form, 'latitude').value = Number(lat).toFixed(8);
     if (field(form, 'longitude')) field(form, 'longitude').value = Number(lng).toFixed(8);
@@ -108,6 +113,7 @@
   }
 
   async function buscarCep(form, context) {
+    if (!locationEnabled(form)) return;
     const cep = onlyDigits(field(form, 'cep')?.value);
     const state = stateFor(form);
     clearTimeout(state.timer);
@@ -155,6 +161,7 @@
   }
 
   async function reverseGeocode(form, context, lat, lng) {
+    if (!locationEnabled(form)) return;
     const operation = startRequest(form);
     operation.state.lastCep = onlyDigits(field(form, 'cep')?.value);
     if (!setCoords(form, lat, lng, context)) return;
@@ -185,6 +192,7 @@
   }
 
   function initMap(form) {
+    if (!locationEnabled(form)) return null;
     if (!window.L) return null;
     const mapEl = form.querySelector('[data-address-map]');
     if (!mapEl) return null;
@@ -207,23 +215,49 @@
       reverseGeocode(form, context, position.lat, position.lng);
     });
     map.on('click', event => reverseGeocode(form, context, event.latlng.lat, event.latlng.lng));
-    form.closest('.offcanvas')?.addEventListener('shown.bs.offcanvas', function () {
-      map.invalidateSize();
-      if (validCoords(field(form, 'latitude')?.value, field(form, 'longitude')?.value)) {
-        setCoords(form, field(form, 'latitude').value, field(form, 'longitude').value, context);
-      }
-    });
     return context;
   }
 
   function initForm(form) {
     if (form.dataset.addressReady === '1') return;
     form.dataset.addressReady = '1';
-    const context = initMap(form);
+    let context = null;
     const state = stateFor(form);
     const cepInput = field(form, 'cep');
     state.inputCep = onlyDigits(cepInput?.value);
-    if (validCoords(field(form, 'latitude')?.value, field(form, 'longitude')?.value)) state.lastCep = state.inputCep;
+    const sharing = form.querySelector('[data-location-sharing]');
+    function syncSharing() {
+      cancelPending(form);
+      state.lastCep = null;
+      const enabled = locationEnabled(form);
+      const mapPanel = form.querySelector('[data-location-map-panel]');
+      if (mapPanel) mapPanel.hidden = !enabled;
+      if (!enabled) {
+        clearCoords(form, context);
+        if (context) {
+          context.map.remove();
+          delete form.querySelector('[data-address-map]').dataset.mapReady;
+          form._addressMapContext = null;
+          context = null;
+        }
+        setStatus(form, '');
+        return;
+      }
+      context = initMap(form);
+      context?.map.invalidateSize();
+      if (validCoords(field(form, 'latitude')?.value, field(form, 'longitude')?.value)) state.lastCep = state.inputCep;
+      else buscarCep(form, context);
+    }
+    sharing?.addEventListener('change', syncSharing);
+    syncSharing();
+    window.addEventListener('pageshow', syncSharing);
+    form.closest('.offcanvas')?.addEventListener('shown.bs.offcanvas', function () {
+      if (!context || !locationEnabled(form)) return;
+      context.map.invalidateSize();
+      if (validCoords(field(form, 'latitude')?.value, field(form, 'longitude')?.value)) {
+        setCoords(form, field(form, 'latitude').value, field(form, 'longitude').value, context);
+      }
+    });
     if (cepInput) {
       cepInput.addEventListener('input', function (event) {
         event.target.value = formatCep(event.target.value);
@@ -234,7 +268,7 @@
         state.lastCep = null;
         clearCoords(form, context);
         setStatus(form, '');
-        if (cep.length === 8) state.timer = setTimeout(() => buscarCep(form, context), 600);
+        if (cep.length === 8 && locationEnabled(form)) state.timer = setTimeout(() => buscarCep(form, context), 600);
       });
       cepInput.addEventListener('blur', () => buscarCep(form, context));
     }
@@ -249,6 +283,7 @@
   window.buscarCEP = function (cep) {
     const form = document.querySelector('[data-address-form]') || document.querySelector('#editOffcanvas form');
     if (!form) return;
+    if (!locationEnabled(form)) return;
     if (field(form, 'cep')) field(form, 'cep').value = formatCep(cep);
     return buscarCep(form, initMap(form));
   };

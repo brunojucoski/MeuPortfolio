@@ -26,7 +26,7 @@ class PropostaContratoController extends Controller
         $guest = ! Auth::check();
 
         if (! $guest && (int) Auth::user()->tipo_usuario !== 3) {
-            abort(403, 'Apenas solicitantes podem enviar propostas.');
+            abort(403, 'Apenas clientes podem enviar propostas.');
         }
 
         $request->validate([
@@ -111,7 +111,7 @@ class PropostaContratoController extends Controller
 
         $portfolio->load('usuario');
         $nomeContratante = Auth::check()
-            ? (Auth::user()->nome ?? 'Solicitante')
+            ? (Auth::user()->nome ?? 'Cliente')
             : (Usuario::find($idAvaliador)?->nome ?? 'Não se identificou');
 
         if ($portfolio->usuario) {
@@ -349,7 +349,7 @@ class PropostaContratoController extends Controller
         }
 
         if ($proposta->ehPropostaSemIdentificacao()) {
-            return redirect()->back()->with('error', 'Não há timeline para orçamentos enviados sem cadastro; use o WhatsApp para combinar com o solicitante.');
+            return redirect()->back()->with('error', 'Não há timeline para orçamentos enviados sem cadastro; use o WhatsApp para combinar com o cliente.');
         }
 
         if ($proposta->status === 'Recusada') {

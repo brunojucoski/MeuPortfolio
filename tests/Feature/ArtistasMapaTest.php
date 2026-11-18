@@ -59,6 +59,7 @@ class ArtistasMapaTest extends TestCase
             $table->softDeletes();
         });
         (require database_path('migrations/2026_10_06_000002_add_map_search_index_to_usuarios.php'))->up();
+        (require database_path('migrations/2026_11_18_000000_add_privacy_and_terms_to_usuarios.php'))->up();
     }
 
     private function artista(array $attributes = []): Usuario
@@ -66,6 +67,7 @@ class ArtistasMapaTest extends TestCase
         return Usuario::create(array_merge([
             'nome' => 'Artista', 'tipo_usuario' => 2, 'cidade' => 'Curitiba',
             'latitude' => -25.4284, 'longitude' => -49.2733,
+            'compartilhar_localizacao' => true,
         ], $attributes));
     }
 
@@ -74,6 +76,17 @@ class ArtistasMapaTest extends TestCase
         return $this->getJson(route('usuarios.mapa', array_merge([
             'latitude' => -25.4284, 'longitude' => -49.2733,
         ], $parameters)));
+    }
+
+    public function test_non_sharing_artists_are_hidden_from_map_and_center_but_stay_in_city_searches(): void
+    {
+        $private = $this->artista(['compartilhar_localizacao' => false, 'nome' => 'Localização privada']);
+        $public = $this->artista(['nome' => 'Localização compartilhada']);
+        $this->assertSame([$public->id], array_column($this->mapa()->assertOk()->json('artistas'), 'id'));
+        $this->get(route('usuarios.publico', ['cidade' => 'Curitiba']))->assertOk()
+            ->assertViewHas('usuarios', fn ($users) => $users->contains('id', $private->id) && $users->contains('id', $public->id));
+        $public->delete();
+        $this->get(route('usuarios.publico'))->assertOk()->assertViewHas('centroMapa', [-14.235, -51.9253]);
     }
 
     public function test_exact_radius_excludes_distant_artists_and_bounding_box_corners(): void

@@ -1,3 +1,6 @@
+@if(in_array($estiloId, [6, 7, 8, 9], true))
+    @include('usuarios.partials.categoria_card_novos_estilos')
+@else
 @if($estiloId === \App\Models\PortfolioArtista::ESTILO_CARD_CATEGORIA_LIVRO)
     <span class="perfil-categoria-book-page">@include('usuarios.partials.categoria_icone', ['icone' => $icone ?? null])<strong>{{ $titulo }}</strong><span>{{ $descricao }}</span></span>
     <span class="perfil-categoria-book-cover">
@@ -14,4 +17,5 @@
     </span>
 @elseif($estiloId === \App\Models\PortfolioArtista::ESTILO_CARD_CATEGORIA_PAINEL_3D)
     <span class="perfil-categoria-flip-content">@include('usuarios.partials.categoria_icone', ['icone' => $icone ?? null])<strong>{{ $titulo }}</strong><span>{{ $descricao }}</span></span>
+@endif
 @endif

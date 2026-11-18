@@ -44,11 +44,22 @@ class VisualSistema
 
     public function sobreTitulo(): string
     {
-        return $this->configuracao()?->sobre_titulo ?? config('visual-sistema.sobre_titulo');
+        return NomenclaturaPublica::clientes($this->configuracao()?->sobre_titulo ?? config('visual-sistema.sobre_titulo'));
     }
 
     public function sobreTexto(): string
     {
-        return $this->configuracao()?->sobre_texto ?? config('visual-sistema.sobre_texto');
+        return NomenclaturaPublica::clientes($this->configuracao()?->sobre_texto ?? config('visual-sistema.sobre_texto'));
+    }
+
+    public function termosResponsavel(): ?string
+    {
+        return $this->configuracao()?->termos_responsavel ?? config('legal.responsavel');
+    }
+
+    public function termosContatoEmail(): ?string
+    {
+        $email = $this->configuracao()?->termos_contato_email ?? config('legal.contato_email');
+        return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
     }
 }

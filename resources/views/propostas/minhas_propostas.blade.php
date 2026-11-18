@@ -121,7 +121,7 @@
 
     @if($usuario->tipo_usuario == 2)
     <div class="col-md-4">
-        <label for="avaliador_id" class="form-label">Solicitante</label>
+        <label for="avaliador_id" class="form-label">Cliente</label>
         <select name="avaliador_id" id="avaliador_id" class="form-select">
             <option value="">Todos</option>
             @foreach($avaliadores as $avaliador)
@@ -170,7 +170,7 @@
 
                     @if($proposta->respostasPergunta->isNotEmpty())
                         <div class="mt-3">
-                            <strong>Respostas do solicitante:</strong>
+                            <strong>Respostas do cliente:</strong>
                             <ul class="list-unstyled small mt-2 mb-0">
                                 @foreach($proposta->respostasPergunta as $resp)
                                     <li class="mb-2 border-start border-3 ps-2">
@@ -190,7 +190,7 @@
                     @endif
 
                     @if($usuario->tipo_usuario == 2)
-                        <p class="mt-2"><strong>Solicitante:</strong> {{ $proposta->usuarioAvaliador->nome ?? 'Não se identificou' }}</p>
+                        <p class="mt-2"><strong>Cliente:</strong> {{ $proposta->usuarioAvaliador->nome ?? 'Não se identificou' }}</p>
 
                         @if($proposta->status === 'Aguardando resposta' && ! $semCadastroVisitante)
                             <button type="button" class="btn btn-outline-custom btn-sm" data-bs-toggle="modal" data-bs-target="#responderModal{{ $proposta->id }}">
@@ -208,7 +208,7 @@
                             </button>
                         @endif
                         @if($usuario->tipo_usuario == 2 && $proposta->status === 'Aguardando execução' && ! $semCadastroVisitante)
-                            <form action="{{ route('propostas.finalizar', $proposta) }}" method="POST" class="d-inline" onsubmit="return confirm('Marcar esta proposta como concluída? O solicitante será notificado e poderá enviar feedback.');">
+                            <form action="{{ route('propostas.finalizar', $proposta) }}" method="POST" class="d-inline" onsubmit="return confirm('Marcar esta proposta como concluída? O cliente será notificado e poderá enviar feedback.');">
                                 @csrf
                                 <button type="submit" class="btn btn-outline-custom btn-sm">Marcar como concluída</button>
                             </form>
@@ -237,7 +237,7 @@
                                     <form action="{{ route('propostas.timeline.store', $proposta) }}" method="POST">
                                         @csrf
                                         <label class="form-label small fw-semibold">Nova mensagem na timeline</label>
-                                        <textarea name="mensagem" class="form-control mb-2" rows="3" required maxlength="2000" placeholder="Comunique-se com o artista ou o solicitante..."></textarea>
+                                        <textarea name="mensagem" class="form-control mb-2" rows="3" required maxlength="2000" placeholder="Comunique-se com o artista ou o cliente..."></textarea>
                                         <button type="submit" class="btn btn-outline-custom btn-sm">Enviar mensagem</button>
                                     </form>
                                 @else

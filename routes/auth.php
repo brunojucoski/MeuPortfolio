@@ -12,10 +12,14 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
+    Route::post('auth/google/redirect', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])
+        ->middleware('throttle:10,1')->name('google.redirect');
+    Route::get('cadastro/google', [\App\Http\Controllers\UsuarioController::class, 'createGoogleCadastro'])->name('google.complete');
+    Route::post('cadastro/google', [\App\Http\Controllers\UsuarioController::class, 'storeGoogleCadastro'])->middleware('throttle:10,1')->name('google.store');
+    Route::get('register', fn () => redirect()->route('usuarios.cadastro'))
                 ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', [\App\Http\Controllers\UsuarioController::class, 'storeCadastro']);
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
                 ->name('login');
@@ -36,6 +40,8 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::post('auth/google/vincular', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'link'])
+        ->middleware('throttle:10,1')->name('google.link');
     Route::get('verify-email', EmailVerificationPromptController::class)
                 ->name('verification.notice');
 
@@ -57,3 +63,6 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 });
+
+Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])
+    ->middleware('throttle:20,1')->name('google.callback');

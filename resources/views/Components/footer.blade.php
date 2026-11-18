@@ -8,6 +8,7 @@
    
     </div>
      <h5 class="text-nome"> MeuPortfólio </h5>
+    <p class="small"><a href="{{ route('termos-uso') }}" class="text-white">Termos de Uso</a></p>
     <p class="small mb-0 text-white">
       &copy; 2025 MeuPortfólio - Todos os direitos reservados.
     </p>

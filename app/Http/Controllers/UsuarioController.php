@@ -13,6 +13,9 @@ use App\Models\CategoriaArtistica;
 use App\Models\FeedbackArtista;
 use App\Models\FeedbackContratante;
 use Illuminate\Database\Eloquent\Builder;
+use App\Support\GoogleOAuth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 
 class UsuarioController extends Controller
@@ -63,9 +66,38 @@ class UsuarioController extends Controller
             'perfil_cadastro' => 'required|string|in:artista,solicitante',
         ], [
             'perfil_cadastro.required' => 'Selecione o perfil de cadastro.',
-            'perfil_cadastro.in' => 'Selecione artista ou solicitante.',
+            'perfil_cadastro.in' => 'Selecione artista ou cliente.',
         ]);
         return $this->storeWithTipo($request, $data['perfil_cadastro'] === 'artista' ? 2 : 3);
+    }
+
+    public function createGoogleCadastro(Request $request)
+    {
+        $googleIdentity = GoogleOAuth::pending($request);
+        if (!$googleIdentity) return redirect()->route('login')->withErrors(['google' => 'O cadastro com Google expirou. Entre com Google novamente.']);
+        $perfilCadastro = old('perfil_cadastro', $googleIdentity['profile']);
+        if (!in_array($perfilCadastro, ['artista', 'solicitante'], true)) $perfilCadastro = 'artista';
+        $artistaOrigemCadastro = GoogleOAuth::artistOrigin($googleIdentity['origin']);
+        return response()->view('usuarios.cadastro', compact('googleIdentity', 'perfilCadastro', 'artistaOrigemCadastro'))
+            ->header('Cache-Control', 'no-store, private')->header('Referrer-Policy', 'no-referrer');
+    }
+
+    public function storeGoogleCadastro(Request $request)
+    {
+        $identity = GoogleOAuth::pending($request);
+        if (!$identity) return redirect()->route('login')->withErrors(['google' => 'O cadastro com Google expirou. Entre com Google novamente.']);
+        $data = $request->validate(['perfil_cadastro' => 'required|in:artista,solicitante']);
+        // Identity and return destination come exclusively from the verified OAuth session.
+        $request->merge(['email' => $identity['email'], 'orcamento_artista' => $identity['origin']]);
+        if (Usuario::withTrashed()->where('google_id', $identity['id'])->exists()) {
+            $request->session()->forget(GoogleOAuth::PENDING);
+            return redirect()->route('login')->withErrors(['google' => 'Esta conta Google já foi cadastrada. Entre com Google novamente.']);
+        }
+        try {
+            return $this->storeWithTipo($request, $data['perfil_cadastro'] === 'artista' ? 2 : 3, $identity);
+        } catch (\Illuminate\Database\QueryException $exception) {
+            return redirect()->route('google.complete')->withErrors(['google' => 'Não foi possível concluir o cadastro. Verifique se o e-mail ou documento já foi cadastrado.']);
+        }
     }
     
 
@@ -79,21 +111,23 @@ class UsuarioController extends Controller
         return $this->storeWithTipo($request, 3); // 3 = contratante
     }
     
-    private function storeWithTipo(Request $request, $tipoUsuario)
+    private function storeWithTipo(Request $request, $tipoUsuario, ?array $googleIdentity = null)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nome' => 'required|string|max:200',
             'documento' => 'required|string|unique:usuarios,documento',
             'email' => 'required|email|unique:usuarios,email',
-            'senha' => 'required|string|min:6|confirmed',
+            'senha' => $googleIdentity ? 'exclude' : 'required|string|min:6|confirmed',
             'telefone' => 'nullable|string|max:18',
             'data_nasc' => 'required|date|before:today',
             'cidade' => 'nullable|string|max:255',
             'cep' => 'nullable|string|max:20',
             'bairro' => 'nullable|string|max:255',
             'endereco' => 'nullable|string|max:255',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
+            'compartilhar_localizacao' => 'nullable|boolean',
+            'latitude' => 'exclude_unless:compartilhar_localizacao,1|required|numeric|between:-90,90',
+            'longitude' => 'exclude_unless:compartilhar_localizacao,1|required|numeric|between:-180,180',
+            'aceite_termos' => 'required|accepted',
         ], [
             'nome.required' => 'Informe seu nome.',
             'documento.required' => 'Informe o CPF ou CNPJ.',
@@ -107,17 +141,33 @@ class UsuarioController extends Controller
             'data_nasc.required' => 'Informe sua data de nascimento.',
             'data_nasc.date' => 'Data de nascimento inválida.',
             'data_nasc.before' => 'A data de nascimento deve ser anterior a hoje.',
+            'aceite_termos.required' => 'Você precisa concordar com os Termos de Uso para criar a conta.',
+            'aceite_termos.accepted' => 'Você precisa concordar com os Termos de Uso para criar a conta.',
+            'latitude.required' => 'Marque sua localização no mapa ou desative o compartilhamento.',
+            'longitude.required' => 'Marque sua localização no mapa ou desative o compartilhamento.',
         ]);
         $artistaOrigemCadastro = $this->artistaOrigemCadastro($request->input('orcamento_artista'));
         $usuario = new Usuario();
-        $usuario->fill($request->except(['senha', 'senha_confirmation', 'orcamento_artista']));
-        $usuario->senha = Hash::make($request->senha);
+        $usuario->fill(\Illuminate\Support\Arr::except($validated, ['senha', 'aceite_termos']));
+        $usuario->compartilhar_localizacao = $request->boolean('compartilhar_localizacao');
+        $usuario->latitude = $usuario->compartilhar_localizacao ? $validated['latitude'] : null;
+        $usuario->longitude = $usuario->compartilhar_localizacao ? $validated['longitude'] : null;
+        $usuario->localizacao_autorizada_em = $usuario->compartilhar_localizacao ? now() : null;
+        $usuario->termos_aceitos_em = now();
+        $usuario->termos_versao = \App\Support\TermosUso::VERSAO;
+        $usuario->senha = Hash::make($googleIdentity ? Str::random(64) : $request->senha);
         $usuario->tipo_usuario = $tipoUsuario;
-        $usuario->save();
-
-        $usuario->createToken('token')->plainTextToken;
+        if ($googleIdentity) {
+            $usuario->google_id = $googleIdentity['id'];
+            $usuario->email_verified_at = now();
+        }
+        DB::transaction(function () use ($usuario) {
+            $usuario->save();
+            $usuario->createToken('token')->plainTextToken;
+        });
 
         Auth::login($usuario);
+        $request->session()->forget(GoogleOAuth::PENDING);
         $request->session()->regenerate();
 
         $destino = $artistaOrigemCadastro
@@ -320,29 +370,44 @@ class UsuarioController extends Controller
 {
     $usuario = Usuario::findOrFail($id);
 
-    $request->validate([
+    abort_unless(Auth::check() && (int) Auth::id() === (int) $usuario->id, 403);
+    if (!$request->has('compartilhar_localizacao')) {
+        $request->merge(['compartilhar_localizacao' => (bool) $usuario->compartilhar_localizacao]);
+        if ($usuario->compartilhar_localizacao) {
+            $request->merge([
+                'latitude' => $request->input('latitude', $usuario->latitude),
+                'longitude' => $request->input('longitude', $usuario->longitude),
+            ]);
+        }
+    }
+    $validated = $request->validate([
         'nome' => 'required|string|max:255',
         'telefone' => 'nullable|string|max:20',
         'cidade' => 'nullable|string|max:255',
         'cep' => 'nullable|string|max:20',
         'bairro' => 'nullable|string|max:255',
         'endereco' => 'nullable|string|max:255',
-        'latitude' => 'nullable|numeric|between:-90,90',
-        'longitude' => 'nullable|numeric|between:-180,180',
+        'compartilhar_localizacao' => 'nullable|boolean',
+        'latitude' => 'exclude_unless:compartilhar_localizacao,1|required|numeric|between:-90,90',
+        'longitude' => 'exclude_unless:compartilhar_localizacao,1|required|numeric|between:-180,180',
         'senha' => 'nullable|string|min:8|confirmed',
         // Sem regra "image": GIF (principalmente animado) falha em alguns ambientes com "image";
         // mime/extension são conferidos por mimes + max em KB.
         'foto_perfil' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:8192',
+    ], [
+        'latitude.required' => 'Marque sua localização no mapa ou desative o compartilhamento.',
+        'longitude.required' => 'Marque sua localização no mapa ou desative o compartilhamento.',
     ]);
 
-    $usuario->nome = $request->nome;
-    $usuario->telefone = $request->telefone;
-    $usuario->cidade = $request->cidade;
-    $usuario->cep = $request->cep;
-    $usuario->bairro = $request->bairro;
-    $usuario->endereco = $request->endereco;
-    $usuario->latitude = $request->latitude;
-    $usuario->longitude = $request->longitude;
+    $wasSharing = (bool) $usuario->compartilhar_localizacao;
+    $usuario->fill(\Illuminate\Support\Arr::except($validated, ['senha', 'foto_perfil']));
+    $usuario->compartilhar_localizacao = $request->boolean('compartilhar_localizacao');
+    if (!$usuario->compartilhar_localizacao) {
+        $usuario->latitude = $usuario->longitude = null;
+        $usuario->localizacao_autorizada_em = null;
+    } elseif (!$wasSharing) {
+        $usuario->localizacao_autorizada_em = now();
+    }
 
     if ($request->filled('senha')) {
         $usuario->senha = Hash::make($request->senha);
@@ -401,6 +466,7 @@ public function listarPublico(Request $request)
     return view('partials.lista_usuarios', compact('usuarios'))->render();
 }
     $primeiraLocalizacao = (clone $query)
+        ->where('compartilhar_localizacao', true)
         ->whereBetween('latitude', [-90, 90])
         ->whereBetween('longitude', [-180, 180])
         ->orderBy('id')->first(['latitude', 'longitude']);
@@ -449,6 +515,7 @@ public function listarPublico(Request $request)
         $latMax = min(90, $latitude + $deltaLatitude);
 
         $query = $this->artistasPublicosQuery($request)
+            ->where('compartilhar_localizacao', true)
             ->whereBetween('latitude', [$latMin, $latMax])
             ->whereBetween('longitude', [-180, 180]);
 

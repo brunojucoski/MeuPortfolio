@@ -12,6 +12,7 @@
     <link href="{{ asset('css/navbar-account.css') }}" rel="stylesheet">
     <link href="{{ asset('css/navbar-shell.css') }}" rel="stylesheet">
     <link href="{{ asset('css/post-image-upload.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/google-auth.css') }}" rel="stylesheet">
     @include('Components.system-theme')
 
 
@@ -53,6 +54,10 @@
 
 
 @auth
+  @if(in_array((int) Auth::user()->tipo_usuario, [2, 3], true) && !Auth::user()->google_id && \App\Support\GoogleOAuth::configured())
+    <form id="googleLinkForm" method="POST" action="{{ route('google.link') }}">@csrf</form>
+  @endif
+  @error('google')<div class="container mt-3"><div class="alert alert-danger" role="alert">{{ $message }}</div></div>@enderror
 
 
   <div class="offcanvas offcanvas-end" tabindex="-1" id="editOffcanvas" aria-labelledby="editOffcanvasLabel">
@@ -70,6 +75,7 @@
         <form method="POST" action="{{ route('usuarios.update', Auth::user()->id) }}" enctype="multipart/form-data" class="text-start" data-address-form
               data-geocode-url="{{ route('endereco.localizar') }}" data-reverse-url="{{ route('endereco.reverso') }}">
                         @csrf
+                        @include('Components.form-validation-summary')
                         @method('PUT')
 
 
@@ -96,30 +102,31 @@
                           </div>
           
             
+            @include('usuarios.partials.location_consent', ['locationConsentId' => 'perfil-compartilhar-localizacao', 'locationUser' => Auth::user()])
             <div class="mb-3">
                             <label class="form-label">CEP</label>
-                            <input type="text" name="cep" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); }" class="form-control" value="{{  Auth::user()->cep }}" maxlength="9" inputmode="numeric">
+                            <input type="text" name="cep" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); }" class="form-control" value="{{ old('cep', Auth::user()->cep) }}" maxlength="9" inputmode="numeric">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Cidade</label>
-                            <input type="text" name="cidade" class="form-control" value="{{  Auth::user()->cidade }}">
+                            <input type="text" name="cidade" class="form-control" value="{{ old('cidade', Auth::user()->cidade) }}">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Bairro</label>
-                            <input type="text" name="bairro" class="form-control" value="{{ Auth::user()->bairro }}">
+                            <input type="text" name="bairro" class="form-control" value="{{ old('bairro', Auth::user()->bairro) }}">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Endereço</label>
-                            <input type="text" name="endereco" class="form-control" value="{{  Auth::user()->endereco }}">
+                            <input type="text" name="endereco" class="form-control" value="{{ old('endereco', Auth::user()->endereco) }}">
                         </div>
 
-                        <input type="hidden" name="latitude" value="{{ Auth::user()->latitude }}">
-                        <input type="hidden" name="longitude" value="{{ Auth::user()->longitude }}">
+                        <input type="hidden" name="latitude" value="{{ old('latitude', Auth::user()->latitude) }}">
+                        <input type="hidden" name="longitude" value="{{ old('longitude', Auth::user()->longitude) }}">
 
-                        <div class="mb-3">
+                        <div class="mb-3" data-location-map-panel @if(!in_array(old('compartilhar_localizacao', Auth::user()->compartilhar_localizacao), [1, '1', true], true)) hidden @endif>
                             <label class="form-label">Localização no mapa</label>
                             <div class="address-map-card">
                                 <div class="address-map" data-address-map></div>
@@ -133,6 +140,16 @@
                                 <i class="bi bi-key"></i> Redefinir senha
                             </button>
                         </div>
+
+                    @if(in_array((int) Auth::user()->tipo_usuario, [2, 3], true))
+                        <div class="mb-3">
+                            @if(Auth::user()->google_id)
+                                <p class="text-success mb-0"><i class="bi bi-check-circle" aria-hidden="true"></i> Conta Google vinculada</p>
+                            @else
+                                @include('auth.partials.google-button', ['googleForm' => \App\Support\GoogleOAuth::configured() ? 'googleLinkForm' : false, 'googleLabel' => 'Vincular Google'])
+                            @endif
+                        </div>
+                    @endif
 
                     <div class="modal-footer p-3 border-0">
                       <button type="button" class="btn btn-outline-custom me-2" data-bs-dismiss="offcanvas">Cancelar</button>

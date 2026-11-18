@@ -35,11 +35,13 @@ class Usuario extends Authenticatable
         'cidade',
         'latitude',
         'longitude',
+        'compartilhar_localizacao',
         'telefone'
     ];
 
     protected $hidden = [
-        'senha', 'remember_token',
+        'senha', 'remember_token', 'latitude', 'longitude', 'google_id',
+        'termos_aceitos_em', 'termos_versao', 'localizacao_autorizada_em',
     ];
 
     protected $casts = [
@@ -47,6 +49,9 @@ class Usuario extends Authenticatable
         'data_nasc' => 'date',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'compartilhar_localizacao' => 'boolean',
+        'localizacao_autorizada_em' => 'datetime',
+        'termos_aceitos_em' => 'datetime',
     ];
 
     public function tipo()

@@ -2,13 +2,13 @@
     <div class="auth-field auth-field-full">
         <label for="cadastro-nome" class="form-label">Nome</label>
         <input type="text" id="cadastro-nome" name="nome" placeholder="Nome completo" required autocomplete="name"
-               class="form-control @error('nome') is-invalid @enderror" value="{{ old('nome') }}">
+               class="form-control @error('nome') is-invalid @enderror" value="{{ old('nome', $googleIdentity['name'] ?? '') }}">
     </div>
 
     <div class="auth-field auth-field-full">
         <label for="cadastro-email" class="form-label">E-mail</label>
         <input type="email" id="cadastro-email" name="email" placeholder="E-mail" required autocomplete="email"
-               class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}">
+               class="form-control @error('email') is-invalid @enderror" value="{{ isset($googleIdentity) ? $googleIdentity['email'] : old('email') }}" @readonly(isset($googleIdentity))>
     </div>
 
     <div class="auth-field">
@@ -27,6 +27,10 @@
         <label for="cadastro-data-nasc" class="form-label">Data de nascimento</label>
         <input type="date" id="cadastro-data-nasc" name="data_nasc" required autocomplete="bday"
                class="form-control @error('data_nasc') is-invalid @enderror" value="{{ old('data_nasc') }}">
+    </div>
+
+    <div class="auth-field auth-field-full">
+        @include('usuarios.partials.location_consent', ['locationConsentId' => 'cadastro-compartilhar-localizacao', 'locationUser' => null])
     </div>
 
     <div class="auth-field">
@@ -56,7 +60,7 @@
     <input type="hidden" name="latitude" value="{{ old('latitude') }}">
     <input type="hidden" name="longitude" value="{{ old('longitude') }}">
 
-    <div class="auth-field auth-field-full">
+    <div class="auth-field auth-field-full" data-location-map-panel @if(!in_array(old('compartilhar_localizacao', false), [1, '1', true], true)) hidden @endif>
         <span class="form-label" id="cadastro-mapa-label">Localização no mapa</span>
         <div class="address-map-card">
             <div class="address-map" data-address-map aria-labelledby="cadastro-mapa-label"></div>
@@ -65,6 +69,7 @@
         <div class="address-map-status" data-address-status aria-live="polite"></div>
     </div>
 
+    @if(!isset($googleIdentity))
     <div class="auth-field">
         <label for="cadastro-senha" class="form-label">Senha</label>
         <input type="password" id="cadastro-senha" name="senha" placeholder="Senha (mín. 6 caracteres)" required
@@ -76,4 +81,5 @@
         <input type="password" id="cadastro-senha-confirmation" name="senha_confirmation" placeholder="Repita a senha" required
                class="form-control" autocomplete="new-password">
     </div>
+    @endif
 </div>

@@ -1,0 +1,179 @@
+/* Uiverse adaptations: dalbrechtmartin/calm-kangaroo-14,
+   javierBarroso/rare-deer-29 and alexruix/heavy-elephant-39.
+   MIT notices: resources/licenses/uiverse-cards.txt. */
+#portfolio-categorias > .container > .row { --bs-gutter-y: 16px; }
+.perfil-publico-page .perfil-categoria-card-col:has(:is(.perfil-categoria-card-estilo-2, .perfil-categoria-card-estilo-3, .perfil-categoria-card-estilo-5)) { min-height: 250px; }
+.perfil-publico-page .perfil-categoria-card-col:has(.perfil-categoria-card-estilo-4) { min-height: 320px; }
+.perfil-publico-page .perfil-categoria-card-col:has(.perfil-categoria-card-estilo-6) { min-height: 300px; }
+.perfil-publico-page .perfil-categoria-card-col:has(.perfil-categoria-card-estilo-7) { min-height: 290px; }
+.perfil-publico-page .perfil-categoria-card-col:has(.perfil-categoria-card-estilo-8) { min-height: 280px; }
+.perfil-publico-page .perfil-categoria-card-col:has(.perfil-categoria-card-estilo-9) { min-height: 274px; }
+.perfil-publico-page :is(.perfil-categoria-card-estilo-6, .perfil-categoria-card-estilo-7, .perfil-categoria-card-estilo-8, .perfil-categoria-card-estilo-9) {
+    flex-shrink: 0;
+    max-width: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+.perfil-publico-page :is(.perfil-categoria-card-estilo-6, .perfil-categoria-card-estilo-7, .perfil-categoria-card-estilo-8, .perfil-categoria-card-estilo-9):focus-visible {
+    outline: 3px solid var(--roxo-appolo);
+    outline-offset: 8px;
+}
+.portfolio-album-surface, .portfolio-album-media, .portfolio-album-photo {
+    display: block;
+    position: absolute;
+    inset: 0;
+}
+.portfolio-album-surface { isolation: isolate; overflow: hidden; border-radius: inherit; background: #262626; }
+.portfolio-album-media { overflow: hidden; background: #303030; }
+.portfolio-album-media-empty { background: rgb(210 213 218 / 24%); }
+.portfolio-album-photo {
+    background-size: cover;
+    background-position: center;
+    filter: blur(1px);
+    transform: scale(1.025);
+    z-index: var(--album-photo-layer);
+    transition: filter .5s ease, transform .5s ease;
+}
+.portfolio-album-media::after { content: ''; position: absolute; inset: 0; background: rgb(0 0 0 / 48%); z-index: 4; }
+.perfil-publico-page .portfolio-album-caption.perfil-categoria-title {
+    inset: 14px;
+    width: auto;
+    height: auto;
+    padding: 0;
+    transform: none;
+    flex-direction: column;
+    gap: 12px;
+    color: #fff;
+    line-height: 1.2;
+    text-shadow: 0 2px 7px rgb(0 0 0 / 80%);
+    z-index: 5;
+}
+.portfolio-album-name { display: block; max-width: 100%; overflow-wrap: anywhere; font-size: var(--album-title-size, 20px); letter-spacing: 0; }
+.perfil-publico-page .portfolio-album-caption .portfolio-icon { font-size: 32px; }
+
+/* Opening cover and independently moving inner page. The scene reserves space for both. */
+.perfil-publico-page .perfil-categoria-card-estilo-6 { width: 320px; height: 300px; background: transparent; --album-book-scale: .8; }
+.portfolio-album-book {
+    display: block;
+    position: absolute;
+    left: calc(50% - 90px * var(--album-book-scale));
+    top: calc(50% - 125px * var(--album-book-scale));
+    width: 180px;
+    height: 250px;
+    border-radius: 8px;
+    background: #f5f5f5;
+    box-shadow: 1px 1px 5px #000;
+    perspective: 600px;
+    transform-style: preserve-3d;
+    transform-origin: left top;
+    transform: scale(var(--album-book-scale));
+    transition: transform .5s;
+}
+.portfolio-album-book-front, .portfolio-album-book-inner {
+    display: block;
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: #d3d3d3;
+    box-shadow: 1px 1px 5px #000;
+    transform-origin: left center;
+    transition: transform .5s, box-shadow .5s;
+}
+.portfolio-album-book-front { z-index: 3; backface-visibility: hidden; transform-style: preserve-3d; }
+.portfolio-album-book-front .portfolio-album-media { border-radius: inherit; }
+.portfolio-album-book-inner { z-index: 2; padding: 7px; background: #fff; }
+.portfolio-album-book-inner .portfolio-album-media { inset: 7px; border-radius: 3px; }
+.portfolio-album-book-inner .portfolio-album-media::after { background: rgb(0 0 0 / 12%); }
+.portfolio-album-book-base { display: flex; position: absolute; inset: 16px; flex-direction: column; justify-content: center; align-items: center; gap: 12px; color: #292929; text-align: center; overflow-wrap: anywhere; }
+.portfolio-album-book-base strong { font-size: 16px; line-height: 1.2; max-width: 100%; }
+.portfolio-album-book-base .portfolio-icon { color: var(--roxo-appolo); font-size: 28px; }
+.portfolio-album-book-description { font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.perfil-categoria-card-estilo-6:is(:hover, :focus-visible) .portfolio-album-book,
+.perfil-estilo-option:is(:hover, :focus-within) .perfil-categoria-card-estilo-6 .portfolio-album-book { transform: scale(var(--album-book-scale)) translateX(-100px) rotateZ(-10deg); }
+.perfil-categoria-card-estilo-6:is(:hover, :focus-visible) .portfolio-album-book-front,
+.perfil-estilo-option:is(:hover, :focus-within) .perfil-categoria-card-estilo-6 .portfolio-album-book-front { transform: rotateY(-70deg); }
+.perfil-categoria-card-estilo-6:is(:hover, :focus-visible) .portfolio-album-book-inner,
+.perfil-estilo-option:is(:hover, :focus-within) .perfil-categoria-card-estilo-6 .portfolio-album-book-inner { transform: rotateZ(10deg) rotateX(-3deg) rotateY(-10deg) translateX(140px); box-shadow: 1px 1px 20px #000a; }
+
+/* Original X/Y/Z inclination and three progressive shadow layers. */
+.perfil-categoria-card-col:has(.perfil-categoria-card-estilo-7),
+.perfil-estilo-preview-wrap:has(.perfil-categoria-card-estilo-7) { transform-style: preserve-3d; perspective: 250px; }
+.perfil-publico-page .perfil-categoria-card-estilo-7 {
+    width: 150px;
+    height: 200px;
+    border-radius: 8px;
+    background: #fff;
+    transform: rotateX(30deg) rotateY(-10deg) rotateZ(30deg);
+    transition: box-shadow .3s ease-in;
+}
+.perfil-categoria-card-estilo-7:is(:hover, :focus-visible),
+.perfil-estilo-option:is(:hover, :focus-within) .perfil-categoria-card-estilo-7 {
+    box-shadow: 5px 10px color-mix(in srgb, var(--roxo-appolo) 50%, transparent),
+        10px 20px color-mix(in srgb, var(--roxo-appolo) 40%, transparent),
+        15px 30px color-mix(in srgb, var(--roxo-claro) 30%, transparent);
+}
+
+/* Dark photo face framed by a gradient, with the reference's fading blurred halo. */
+.perfil-publico-page .perfil-categoria-card-estilo-8 {
+    --album-glow: linear-gradient(to left, var(--roxo-claro), var(--roxo-appolo));
+    width: 190px;
+    height: 254px;
+    padding: 5px;
+    border-radius: 8px;
+    background: var(--album-glow);
+    overflow: visible;
+}
+.perfil-categoria-card-estilo-8::after {
+    content: '';
+    position: absolute;
+    top: 30px;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: var(--album-glow);
+    transform: scale(.8);
+    filter: blur(25px);
+    z-index: -1;
+    transition: opacity .5s;
+    pointer-events: none;
+}
+.perfil-categoria-card-estilo-8 .portfolio-album-surface { inset: 5px; border-radius: 5px; background: #181818; }
+.perfil-categoria-card-estilo-8 .portfolio-album-media::after { background: rgb(0 0 0 / 65%); }
+.perfil-publico-page .perfil-categoria-card-estilo-8 .portfolio-album-caption { transition: color 1s; }
+.perfil-categoria-card-estilo-8:is(:hover, :focus-visible)::after,
+.perfil-estilo-option:is(:hover, :focus-within) .perfil-categoria-card-estilo-8::after { opacity: 0; }
+.perfil-publico-page .perfil-categoria-card-estilo-8:is(:hover, :focus-visible) .portfolio-album-caption,
+.perfil-publico-page .perfil-estilo-option:is(:hover, :focus-within) .perfil-categoria-card-estilo-8 .portfolio-album-caption { color: color-mix(in srgb, var(--roxo-claro) 30%, white); }
+
+/* Parallel diagonal sides; the icon and album name stay upright inside the cutout. */
+.perfil-publico-page .perfil-categoria-card-estilo-9 {
+    width: 320px;
+    height: 250px;
+    background: transparent;
+    filter: drop-shadow(0 8px 7px rgb(0 0 0 / 20%));
+    transition: transform .35s ease, filter .35s ease;
+}
+.perfil-categoria-card-estilo-9 .portfolio-album-surface { clip-path: polygon(38% 0, 100% 0, 62% 100%, 0 100%); background: var(--roxo-appolo); }
+.perfil-publico-page .perfil-categoria-card-estilo-9 .portfolio-album-caption { inset: 28px 23%; gap: 10px; }
+.perfil-categoria-card-estilo-9:is(:hover, :focus-visible),
+.perfil-estilo-option:is(:hover, :focus-within) .perfil-categoria-card-estilo-9 { transform: translateY(-8px); filter: drop-shadow(0 16px 10px color-mix(in srgb, var(--roxo-appolo) 35%, transparent)); }
+.perfil-categoria-card-estilo-9:is(:hover, :focus-visible) .portfolio-album-photo,
+.perfil-estilo-option:is(:hover, :focus-within) .perfil-categoria-card-estilo-9 .portfolio-album-photo { transform: scale(1.09); filter: blur(.4px); }
+
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-6 { width: 210px; height: 180px; --album-book-scale: .5; }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-7 { transform: scale(.78) rotateX(30deg) rotateY(-10deg) rotateZ(30deg); }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-8 { transform: scale(.66); }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-9 { width: 210px; height: 165px; }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-9 .portfolio-album-caption { inset: 12px 23%; gap: 6px; }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-9 .portfolio-album-name { font-size: 15px; }
+.perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-9 .portfolio-icon { font-size: 24px; }
+@media (max-width: 400px) {
+    .perfil-publico-page .perfil-categoria-card-estilo-6 { width: 280px; height: 270px; --album-book-scale: .68; }
+    .perfil-publico-page .perfil-estilo-preview-wrap .perfil-categoria-card-estilo-6 { width: 210px; height: 180px; --album-book-scale: .5; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .portfolio-album-book, .portfolio-album-book-front, .portfolio-album-book-inner,
+    .portfolio-album-photo, .perfil-publico-page .perfil-categoria-card-estilo-7,
+    .perfil-publico-page .perfil-categoria-card-estilo-8::after,
+    .perfil-publico-page .perfil-categoria-card-estilo-8 .portfolio-album-caption,
+    .perfil-publico-page .perfil-categoria-card-estilo-9 { transition: none; }
+}

@@ -10,16 +10,20 @@ class Element {
   emit(event, data = {}) { return this.events[event]?.({ target: this, ...data }); }
 }
 
-function fixture({ initial = {}, leaflet = true } = {}) {
+function fixture({ initial = {}, leaflet = true, sharing = true } = {}) {
   const fields = Object.fromEntries(['cep', 'cidade', 'bairro', 'endereco', 'latitude', 'longitude']
     .map(name => [name, new Element(initial[name] || '')]));
   const form = new Element();
   const mapEl = new Element();
   const status = new Element();
   const panel = new Element();
+  const consent = new Element(); consent.checked = sharing;
+  const mapPanel = new Element();
   form.dataset.geocodeUrl = 'http://localhost/endereco/localizar';
   form.dataset.reverseUrl = 'http://localhost/endereco/reverso';
   form.querySelector = selector => {
+    if (selector === '[data-location-sharing]') return consent;
+    if (selector === '[data-location-map-panel]') return mapPanel;
     if (selector === '[data-address-map]') return mapEl;
     if (selector === '[data-address-status]') return status;
     return fields[selector.match(/name="([^"]+)"/)?.[1]];
@@ -31,6 +35,7 @@ function fixture({ initial = {}, leaflet = true } = {}) {
   map.hasLayer = layer => map.layers.has(layer);
   map.removeLayer = layer => map.layers.delete(layer);
   map.invalidateSize = () => { map.invalidated = true; };
+  map.remove = () => { map.removed = true; map.layers.clear(); };
   const marker = new Element();
   marker.setLatLng = coords => { marker.coords = Array.from(coords); return marker; };
   marker.addTo = m => { m.layers.add(marker); return marker; };
@@ -48,7 +53,7 @@ function fixture({ initial = {}, leaflet = true } = {}) {
   const document = new Element();
   document.querySelectorAll = () => [form];
   document.querySelector = () => form;
-  const window = { L: leaflet ? L : null, location: { href: 'http://localhost/cadastro/artista' } };
+  const window = { L: leaflet ? L : null, location: { href: 'http://localhost/cadastro/artista' }, addEventListener() {} };
   runInNewContext(readFileSync(resolve(__dirname, '../../public/js/endereco-map.js'), 'utf8'), {
     window, document, fetch, URL, AbortController,
     setTimeout: (handler, delay) => { timers.set(++timerId, { handler, delay }); return timerId; },
@@ -56,7 +61,7 @@ function fixture({ initial = {}, leaflet = true } = {}) {
   });
   document.emit('DOMContentLoaded');
   return {
-    fields, form, map, marker, status, panel, requests, timers,
+    fields, form, map, marker, status, panel, requests, timers, consent, mapPanel,
     input(cep) { fields.cep.value = cep; fields.cep.emit('input'); },
     blur() { return fields.cep.emit('blur'); },
     debounce() {
@@ -75,6 +80,35 @@ const address = {
   cep: '88801001', city: 'Criciuma', state: 'SC', street: 'Rua de teste', neighborhood: 'Centro',
   location: { coordinates: { latitude: '-28.6775', longitude: '-49.3697' } },
 };
+
+test('location is private until opted in: no map, CEP lookup or coordinates are initialized', async () => {
+  const f = fixture({ sharing: false, initial: { latitude: '-28.6', longitude: '-49.3' } });
+  assert.equal(f.map.zoom, undefined);
+  assert.equal(f.mapPanel.hidden, true);
+  assert.equal(f.fields.latitude.value, '');
+  f.input('88801001'); await f.blur(); f.debounce();
+  assert.equal(f.requests.length, 0);
+  f.fields.cidade.value = 'Criciuma';
+  f.consent.checked = true; f.consent.emit('change');
+  assert.equal(f.mapPanel.hidden, false);
+  assert.equal(f.requests.length, 1);
+  await f.reply(0, address);
+  assert.equal(f.fields.latitude.value, '-28.67750000');
+});
+
+test('withdrawing sharing destroys the map and stale requests cannot restore coordinates', async () => {
+  const f = fixture(); f.input('88801001'); f.debounce();
+  const pending = f.requests[0];
+  f.consent.checked = false; f.consent.emit('change');
+  assert.equal(pending.options.signal.aborted, true);
+  assert.equal(f.mapPanel.hidden, true);
+  assert.equal(f.map.removed, true);
+  await f.reply(0, address);
+  assert.equal(f.fields.latitude.value, '');
+  assert.equal(f.fields.longitude.value, '');
+  await f.click(-28, -49);
+  assert.equal(f.requests.length, 1);
+});
 
 test('new forms have no fake marker; existing coordinates initialize the map', () => {
   const blank = fixture();

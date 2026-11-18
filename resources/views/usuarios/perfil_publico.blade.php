@@ -6,6 +6,7 @@
     <link href="{{ asset('css/perfil.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('css/portfolio-cards.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/portfolio-extra-cards.css') }}" rel="stylesheet">
     <link href="{{ asset('css/portfolio-profile-details.css') }}" rel="stylesheet">
     <link href="{{ asset('css/portfolio-areas.css') }}" rel="stylesheet">
     <link href="{{ asset('css/portfolio-export.css') }}" rel="stylesheet">
@@ -160,7 +161,7 @@
                             <p class="text-muted mb-1"><i class="bi bi-calendar"></i> {{ $usuario->idade }} anos </p>
                             <p class="text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ $usuario->cidade ?? 'Localidade não definida' }} </p>
                             <p class="text-muted mb-1"><i class="bi bi-telephone"></i> {{ formatarTelefone($usuario->telefone) }}</p>
-                            <p class="mb-2"><strong>Endereço:</strong> {{ formatarCep($usuario->cep) }} , {{ $usuario->bairro }} , {{ $usuario->endereco }}</p>
+                            @include('usuarios.partials.endereco_publico')
                             @if($usuario->tipo_usuario == 2)
                                 <p class="mb-2"><i class="bi bi-brush"></i> {{ $portfolio->descricao ?? 'Descrição do portfólio não disponível' }}</p>
                             @endif
@@ -176,7 +177,7 @@
                                     <p class="text-muted mb-2"><i class="bi bi-calendar"></i> {{ $usuario->idade }} anos </p>
                                     <p class="text-muted mb-2"><i class="bi bi-geo-alt"></i> {{ $usuario->cidade ?? 'Localidade não definida' }} </p>
                                     <p class="text-muted mb-2"><i class="bi bi-telephone"></i> {{ formatarTelefone($usuario->telefone) }}</p>
-                                    <p class="mb-2"><strong>Endereço:</strong> {{ formatarCep($usuario->cep) }} , {{ $usuario->bairro }} , {{ $usuario->endereco }}</p>
+                                    @include('usuarios.partials.endereco_publico')
                                     @if($usuario->tipo_usuario == 2)
                                         <p class="mb-0"><i class="bi bi-brush"></i> {{ $portfolio->descricao ?? 'Descrição do portfólio não disponível' }}</p>
                                     @endif

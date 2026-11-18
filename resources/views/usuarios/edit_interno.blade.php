@@ -23,7 +23,7 @@
             <select name="tipo_usuario_id" class="form-control">
                 @foreach ($tiposUsuario as $tipo)
                     <option value="{{ $tipo->id }}" {{ $usuario->tipo_usuario_id == $tipo->id ? 'selected' : '' }}>
-                        {{ $tipo->nome }}
+                        {{ \App\Support\NomenclaturaPublica::clientes($tipo->nome) }}
                     </option>
                 @endforeach
             </select>

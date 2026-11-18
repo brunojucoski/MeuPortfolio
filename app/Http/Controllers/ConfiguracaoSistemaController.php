@@ -21,8 +21,12 @@ class ConfiguracaoSistemaController extends Controller
             'cor_base' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'sobre_titulo' => ['required', 'string', 'max:120'],
             'sobre_texto' => ['required', 'string', 'max:15000'],
+            'termos_responsavel' => ['nullable', 'required_with:termos_contato_email', 'string', 'max:200'],
+            'termos_contato_email' => ['nullable', 'required_with:termos_responsavel', 'email:rfc', 'max:254'],
         ];
         $atributos = ['cor_base' => 'cor base', 'sobre_titulo' => 'título do Sobre', 'sobre_texto' => 'texto do Sobre'];
+        $atributos['termos_responsavel'] = 'nome do responsável';
+        $atributos['termos_contato_email'] = 'e-mail de contato dos termos';
         foreach (config('visual-sistema.imagens') as $local => $imagem) {
             $regras['imagem_' . $local] = ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=6000,max_height=6000'];
             $regras['restaurar_' . $local] = ['nullable', 'boolean'];
@@ -34,6 +38,8 @@ class ConfiguracaoSistemaController extends Controller
             'max.file' => 'A imagem de :attribute deve ter até 2 MB.',
             'regex' => 'Informe uma cor hexadecimal válida no campo :attribute.',
             'dimensions' => 'A imagem de :attribute deve ter no máximo 6000 × 6000 pixels.',
+            'required_with' => 'Preencha :attribute para completar o contato dos Termos de Uso.',
+            'email' => 'Informe um e-mail válido no campo :attribute.',
         ], $atributos);
         $novas = [];
         $antigas = [];
@@ -52,6 +58,9 @@ class ConfiguracaoSistemaController extends Controller
                     'sobre_titulo' => $validados['sobre_titulo'], 'sobre_texto' => $validados['sobre_texto'],
                     'atualizado_por' => $request->user()->id,
                 ];
+                foreach (['termos_responsavel', 'termos_contato_email'] as $field) {
+                    if (array_key_exists($field, $validados)) $dados[$field] = $validados[$field];
+                }
                 foreach (config('visual-sistema.imagens') as $local => $imagem) {
                     $coluna = 'imagem_' . $local;
                     if ($request->boolean('restaurar_' . $local) || isset($novas[$coluna])) {
@@ -69,6 +78,7 @@ class ConfiguracaoSistemaController extends Controller
         }
         // Never delete bundled defaults, and remove replaced uploads only after commit.
         Storage::disk('public')->delete(array_filter($antigas, fn ($caminho) => str_starts_with($caminho, 'sistema/imagens/')));
-        return redirect()->route('admin.configuracoes.edit')->with('success', 'Configurações visuais salvas.');
+        app()->forgetInstance(\App\Support\VisualSistema::class);
+        return redirect()->route('admin.configuracoes.edit')->with('success', 'Configurações do sistema salvas.');
     }
 }

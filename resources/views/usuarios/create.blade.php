@@ -33,7 +33,7 @@
             <label>Tipo de Usuário</label>
             <select name="tipo_usuario" class="form-control">
                 @foreach($tipos as $tipo)
-                    <option value="{{ $tipo->id }}">{{ $tipo->nome }}</option>
+                    <option value="{{ $tipo->id }}">{{ \App\Support\NomenclaturaPublica::clientes($tipo->nome) }}</option>
                 @endforeach
             </select>
         </div>

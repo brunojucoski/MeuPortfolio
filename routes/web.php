@@ -52,6 +52,8 @@ Route::get('/sobre', function () {
     return view('sobre');
 })->name('sobrepage');
 
+Route::view('/termos-de-uso', 'legal.termos')->name('termos-uso');
+
 
 
 Route::get('/', function () {

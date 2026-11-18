@@ -34,6 +34,7 @@ class ConfiguracaoSistemaTest extends TestCase
         });
         (require database_path('migrations/2026_10_07_000000_create_configuracoes_sistema.php'))->up();
         (require database_path('migrations/2026_10_07_000002_add_logo_to_configuracoes_sistema.php'))->up();
+        (require database_path('migrations/2026_11_18_000001_add_terms_contact_to_configuracoes_sistema.php'))->up();
         Storage::fake('public');
     }
 
@@ -86,6 +87,79 @@ class ConfiguracaoSistemaTest extends TestCase
         $this->put(route('admin.configuracoes.update'), $this->dados())->assertRedirect(route('admin.configuracoes.edit'))->assertSessionHasNoErrors();
         $this->assertDatabaseHas('configuracoes_sistema', $this->dados() + ['atualizado_por' => $admin->id]);
         $this->assertDatabaseCount('configuracoes_sistema', 1);
+    }
+
+    public function test_admin_contact_is_saved_in_database_and_immediately_replaces_legacy_configuration(): void
+    {
+        config(['legal.responsavel' => 'Nome do ambiente', 'legal.contato_email' => 'ambiente@example.test']);
+        $admin = $this->usuario();
+        $this->actingAs($admin)->get(route('admin.configuracoes.edit'))->assertOk()
+            ->assertSee('Termos de Uso e privacidade')->assertSee('name="termos_responsavel"', false)
+            ->assertSee('name="termos_contato_email"', false)->assertSee('Nome do ambiente');
+        $contact = ['termos_responsavel' => 'Administração da plataforma', 'termos_contato_email' => 'privacidade@example.test'];
+        $this->put(route('admin.configuracoes.update'), $this->dados() + $contact)->assertSessionHasNoErrors()->assertRedirect(route('admin.configuracoes.edit'));
+        $this->assertDatabaseHas('configuracoes_sistema', $contact + ['id' => 1, 'atualizado_por' => $admin->id]);
+        $this->get(route('admin.configuracoes.edit'))->assertOk()->assertSee('value="privacidade@example.test"', false);
+        Auth::logout();
+        $this->get(route('termos-uso'))->assertOk()->assertSee('Administração da plataforma')
+            ->assertSee('href="mailto:privacidade@example.test"', false)
+            ->assertDontSee('Nome do ambiente')->assertDontSee('ambiente@example.test')
+            ->assertDontSee('O canal de contato ainda não foi configurado');
+        $this->assertDatabaseCount('configuracoes_sistema', 1);
+    }
+
+    public function test_invalid_or_incomplete_contact_does_not_partially_save_other_settings(): void
+    {
+        $this->actingAs($this->usuario());
+        ConfiguracaoSistema::find(1)->update(['termos_responsavel' => 'Responsável anterior', 'termos_contato_email' => 'anterior@example.test']);
+        foreach ([
+            ['termos_responsavel' => 'Novo', 'termos_contato_email' => 'javascript:alert(1)'],
+            ['termos_responsavel' => 'Novo'],
+            ['termos_contato_email' => 'novo@example.test'],
+            ['termos_responsavel' => str_repeat('x', 201), 'termos_contato_email' => 'novo@example.test'],
+            ['termos_responsavel' => ['inválido'], 'termos_contato_email' => 'novo@example.test'],
+        ] as $invalid) {
+            $this->put(route('admin.configuracoes.update'), $this->dados() + $invalid)->assertSessionHasErrors();
+            $this->assertDatabaseHas('configuracoes_sistema', ['cor_base' => '#6d2e2e', 'termos_responsavel' => 'Responsável anterior', 'termos_contato_email' => 'anterior@example.test']);
+        }
+    }
+
+    public function test_omitted_contact_is_preserved_and_both_fields_can_be_cleared_explicitly(): void
+    {
+        config(['legal.responsavel' => null, 'legal.contato_email' => null]);
+        $this->actingAs($this->usuario());
+        $contact = ['termos_responsavel' => 'Responsável', 'termos_contato_email' => 'contato@example.test'];
+        $this->put(route('admin.configuracoes.update'), $this->dados() + $contact)->assertSessionHasNoErrors();
+        $this->put(route('admin.configuracoes.update'), $this->dados())->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('configuracoes_sistema', $contact);
+        $this->put(route('admin.configuracoes.update'), $this->dados() + array_fill_keys(array_keys($contact), ''))->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('configuracoes_sistema', array_fill_keys(array_keys($contact), null));
+        Auth::logout();
+        $this->get(route('termos-uso'))->assertOk()->assertSee('O canal de contato ainda não foi configurado');
+    }
+
+    public function test_contact_is_only_editable_by_admins_and_public_values_are_escaped(): void
+    {
+        $contact = ['termos_responsavel' => '<script>Responsável</script>', 'termos_contato_email' => 'contato@example.test'];
+        foreach ([2, 3] as $type) {
+            $this->actingAs($this->usuario($type))->put(route('admin.configuracoes.update'), $this->dados() + $contact)->assertForbidden();
+        }
+        $this->assertDatabaseHas('configuracoes_sistema', ['termos_responsavel' => null, 'termos_contato_email' => null]);
+        $this->actingAs($this->usuario())->put(route('admin.configuracoes.update'), $this->dados() + $contact)->assertSessionHasNoErrors();
+        Auth::logout();
+        $this->get(route('termos-uso'))->assertOk()->assertSee('&lt;script&gt;Responsável&lt;/script&gt;', false)
+            ->assertDontSee('<script>Responsável</script>', false);
+    }
+
+    public function test_terms_contact_migration_is_reversible_without_changing_visual_configuration(): void
+    {
+        ConfiguracaoSistema::find(1)->update($this->dados() + ['termos_responsavel' => 'Responsável', 'termos_contato_email' => 'contato@example.test']);
+        $migration = require database_path('migrations/2026_11_18_000001_add_terms_contact_to_configuracoes_sistema.php');
+        $migration->down();
+        $this->assertFalse(Schema::hasColumn('configuracoes_sistema', 'termos_responsavel'));
+        $this->assertDatabaseHas('configuracoes_sistema', $this->dados());
+        $migration->up();
+        $this->assertDatabaseHas('configuracoes_sistema', $this->dados() + ['termos_responsavel' => null, 'termos_contato_email' => null]);
     }
 
     public function test_uploaded_images_are_applied_to_all_corresponding_public_pages(): void
@@ -232,6 +306,15 @@ class ConfiguracaoSistemaTest extends TestCase
             ->assertSee('&lt;img src=x onerror=alert(1)&gt;', false)->assertDontSee('<script>alert(1)</script>', false);
     }
 
+    public function test_configured_about_copy_uses_cliente_without_rewriting_saved_content(): void
+    {
+        $copy = ['sobre_titulo' => 'Para artistas e Solicitantes', 'sobre_texto' => 'Um solicitante encontra artistas. Contato: solicitante@example.test'];
+        ConfiguracaoSistema::find(1)->update($copy);
+        $this->get('/sobre')->assertOk()->assertSee('Para artistas e Clientes')
+            ->assertSee('Um cliente encontra artistas.')->assertSee('solicitante@example.test');
+        $this->assertDatabaseHas('configuracoes_sistema', $copy);
+    }
+
     public function test_internal_login_shows_only_the_shared_form_and_allows_only_admins(): void
     {
         $this->get('/login_interno')->assertOk()->assertSee('css/auth-forms.css', false)
@@ -276,6 +359,7 @@ class ConfiguracaoSistemaTest extends TestCase
             ->assertSee('--orcamento-texto: #ffffff; --orcamento-texto-hover: #000000;', false)
             ->assertSee('<i class="bi bi-send" aria-hidden="true"></i><span>Enviar orçamento</span>', false)
             ->assertSee('data-bs-target="#modalConviteCadastroSolicitante"', false)
+            ->assertSee('css/portfolio-extra-cards.css', false)
             ->assertSeeInOrder(['id="portfolio-posts"', 'id="portfolio-categorias"'], false)
             ->assertSee(e(route('usuarios.cadastro', ['tipo' => 'solicitante', 'orcamento_artista' => $user->id])), false);
     }

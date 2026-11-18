@@ -16,13 +16,14 @@ function fixture({ requester = false, mask = true } = {}) {
   const profile = new Element(requester ? 'solicitante' : 'artista');
   profile.options = [
     { dataset: { title: 'Cadastro de artista', image: '/artista.png', imageAlt: 'Artista' } },
-    { dataset: { title: 'Cadastro de solicitante', image: '/solicitante.png', imageAlt: 'Solicitante' } },
+    { dataset: { title: 'Cadastro de cliente', image: '/solicitante.png', imageAlt: 'Cliente' } },
   ];
   const toggle = new Element();
   const selector = new Element();
   const fallback = new Element();
   const title = new Element();
   const image = new Element();
+  const googleProfile = new Element();
   const doc = new Element();
   const phone = new Element();
   const name = new Element('Nome preenchido');
@@ -33,12 +34,13 @@ function fixture({ requester = false, mask = true } = {}) {
     'form-cadastro': form, 'cadastro-tipo': profile, 'cadastro-profile-switch': toggle,
     'cadastro-profile-toggle': selector, 'cadastro-profile-fallback': fallback,
     'cadastro-titulo': title, 'cadastro-ilustracao': image, documento: doc, telefone: phone,
+    'google-cadastro-tipo': googleProfile,
   })[id];
   const window = new Element();
   if (mask) window.IMask = () => ({ get unmaskedValue() { return phone.value.replace(/\D/g, ''); } });
   runInNewContext(readFileSync(resolve(__dirname, '../../public/js/cadastro.js'), 'utf8'), { document, window });
   document.emit('DOMContentLoaded');
-  return { form, profile, toggle, selector, fallback, title, image, doc, phone, name, latitude, longitude, window };
+  return { form, profile, toggle, selector, fallback, title, image, googleProfile, doc, phone, name, latitude, longitude, window };
 }
 
 test('server profile presets initialize the lever, submitted value, title and configured illustration', () => {
@@ -46,6 +48,7 @@ test('server profile presets initialize the lever, submitted value, title and co
     const f = fixture({ requester });
     assert.equal(f.toggle.checked, requester);
     assert.equal(f.profile.value, requester ? 'solicitante' : 'artista');
+    assert.equal(f.googleProfile.value, f.profile.value);
     assert.equal(f.image.src, requester ? '/solicitante.png' : '/artista.png');
     assert.equal(f.selector.hidden, false);
     assert.equal(f.fallback.hidden, true);
@@ -61,7 +64,8 @@ test('repeated switching changes the actual submitted profile without resetting 
     f.toggle.checked = requester;
     f.toggle.emit('change');
     assert.equal(f.profile.value, requester ? 'solicitante' : 'artista');
-    assert.equal(f.title.textContent, requester ? 'Cadastro de solicitante' : 'Cadastro de artista');
+    assert.equal(f.googleProfile.value, f.profile.value);
+    assert.equal(f.title.textContent, requester ? 'Cadastro de cliente' : 'Cadastro de artista');
     assert.equal(f.image.src, requester ? '/solicitante.png' : '/artista.png');
     assert.equal(f.doc.value, '123.456.789-01');
     assert.equal(f.phone.value, '(48) 99999-9999');
@@ -80,7 +84,8 @@ test('browser-restored profile remains synchronized with the visual switch', () 
   f.profile.value = 'solicitante';
   f.window.emit('pageshow');
   assert.equal(f.toggle.checked, true);
-  assert.equal(f.title.textContent, 'Cadastro de solicitante');
+  assert.equal(f.title.textContent, 'Cadastro de cliente');
+  assert.equal(f.googleProfile.value, 'solicitante');
   assert.equal(f.selector.classes.has('is-requester'), true);
 });
 

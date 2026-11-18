@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const fallback = document.getElementById('cadastro-profile-fallback');
   const title = document.getElementById('cadastro-titulo');
   const illustration = document.getElementById('cadastro-ilustracao');
+  const googleProfile = document.getElementById('google-cadastro-tipo');
 
   function updateProfile() {
     const requester = profile.value === 'solicitante';
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     title.textContent = option.dataset.title;
     illustration.src = option.dataset.image;
     illustration.alt = option.dataset.imageAlt;
+    if (googleProfile) googleProfile.value = profile.value;
   }
 
   toggle.addEventListener('change', function () {

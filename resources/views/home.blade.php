@@ -33,7 +33,7 @@
                 <div class="col-lg-10 col-xl-9 text-center">
                     <p class="home-kicker text-uppercase small fw-semibold mb-2">Comunidade criativa</p>
                     <h1 class="home-hero-title text-nome fw-bold mb-3">
-                        Conectando artistas e solicitantes em um só lugar
+                        Conectando artistas e clientes em um só lugar
                     </h1>
                     <p class="home-hero-description lead mb-4">
                         Cadastre seu portfólio, receba pedidos de orçamento com formulários personalizados e fortaleça sua reputação com avaliações — tudo no MeuPortfólio.
@@ -90,7 +90,7 @@
                         <div class="card-body p-4">
                             <div class="home-icon-wrap mb-3"><i class="bi bi-star-half"></i></div>
                             <h3 class="h5 fw-semibold text-purple">Feedback e credibilidade</h3>
-                            <p class="text-muted small mb-0">Avaliações para construir confiança entre artistas e solicitantes.</p>
+                            <p class="text-muted small mb-0">Avaliações para construir confiança entre artistas e clientes.</p>
                         </div>
                     </div>
                 </div>
@@ -111,7 +111,7 @@
                     <span class="home-audience-label home-audience-label-artist">Sou artista</span>
                     <span class="toggle-container">
                         <input class="toggle-input" type="checkbox" role="switch" id="home-audience-switch"
-                            aria-label="Mostrar benefícios para solicitantes" aria-controls="conteudoArtista conteudoContratante">
+                            aria-label="Mostrar benefícios para clientes" aria-controls="conteudoArtista conteudoContratante">
                         <span class="toggle-handle-wrapper" aria-hidden="true">
                             <span class="toggle-handle">
                                 <span class="toggle-handle-knob"></span>
@@ -120,7 +120,7 @@
                         </span>
                         <span class="toggle-base" aria-hidden="true"><span class="toggle-base-inside"></span></span>
                     </span>
-                    <span class="home-audience-label home-audience-label-requester">Sou solicitante</span>
+                    <span class="home-audience-label home-audience-label-requester">Sou cliente</span>
                 </label>
             </div>
 
@@ -149,7 +149,7 @@
                                 <li><i class="bi bi-check-circle-fill text-purple me-2"></i> Avaliar artistas após serviços</li>
                             </ul>
                             @guest
-                                <a href="{{ route('usuarios.cadastro', ['tipo' => 'solicitante']) }}" class="btn btn-primary-custom btn-sm">Cadastro solicitante</a>
+                                <a href="{{ route('usuarios.cadastro', ['tipo' => 'solicitante']) }}" class="btn btn-primary-custom btn-sm">Cadastro de cliente</a>
                             @endguest
                         </div>
                     </div>
@@ -178,7 +178,7 @@
                     <div class="carousel-item">
                         <blockquote class="mb-2 fst-italic text-muted mx-auto" style="max-width: 520px;">“Facilitou encontrar profissionais e comparar trabalhos antes de fechar.”</blockquote>
                         <div class="text-warning"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
-                        <footer class="small text-muted mt-2">Solicitante</footer>
+                        <footer class="small text-muted mt-2">Cliente</footer>
                     </div>
                     <div class="carousel-item">
                         <blockquote class="mb-2 fst-italic text-muted mx-auto" style="max-width: 520px;">“O formulário de orçamento reduziu idas e vindas por mensagem.”</blockquote>
@@ -203,7 +203,7 @@
         <div class="home-cta-bg" aria-hidden="true"></div>
         <div class="container position-relative py-3" data-aos="fade-up">
             <h2 class="h3 fw-bold mb-3">Pronto para começar?</h2>
-            <p class="opacity-75 mb-4 mx-auto" style="max-width: 480px;">Explore portfólios ou crie sua conta — artista ou solicitante.</p>
+            <p class="opacity-75 mb-4 mx-auto" style="max-width: 480px;">Explore portfólios ou crie sua conta — artista ou cliente.</p>
             <div class="d-flex flex-wrap justify-content-center gap-2">
                 <a href="{{ route('usuarios.publico') }}" class="btn btn-light text-purple fw-semibold px-4">Buscar portfólios</a>
                 @guest

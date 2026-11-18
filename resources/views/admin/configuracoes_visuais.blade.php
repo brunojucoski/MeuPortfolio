@@ -48,6 +48,26 @@
         <label class="form-label" for="sobre_texto">Texto</label>
         <textarea class="form-control @error('sobre_texto') is-invalid @enderror" name="sobre_texto" id="sobre_texto" rows="7" maxlength="15000" required>{{ old('sobre_texto', $visualSistema->sobreTexto()) }}</textarea>
     </section>
+    <section class="visual-section">
+        <h2>Termos de Uso e privacidade</h2>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="form-label" for="termos_responsavel">Nome do responsável pela plataforma</label>
+                <input type="text" name="termos_responsavel" id="termos_responsavel" maxlength="200"
+                       class="form-control @error('termos_responsavel') is-invalid @enderror"
+                       value="{{ old('termos_responsavel', $visualSistema->termosResponsavel()) }}">
+                @error('termos_responsavel')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="termos_contato_email">E-mail de contato e privacidade</label>
+                <input type="email" name="termos_contato_email" id="termos_contato_email" maxlength="254"
+                       class="form-control @error('termos_contato_email') is-invalid @enderror"
+                       value="{{ old('termos_contato_email', $visualSistema->termosContatoEmail()) }}">
+                @error('termos_contato_email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+        </div>
+        <a href="{{ route('termos-uso') }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Ver Termos de Uso</a>
+    </section>
     <div class="visual-settings-footer"><button type="submit" class="visual-save"><i class="bi bi-check2" aria-hidden="true"></i> Salvar alterações</button></div>
 </form>
 @endsection

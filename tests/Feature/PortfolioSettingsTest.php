@@ -93,6 +93,42 @@ class PortfolioSettingsTest extends TestCase
         $this->assertSame('Original', $portfolio->fresh()->nome_artistico);
     }
 
+    public function test_new_album_styles_can_be_created_and_changed_without_replacing_existing_settings(): void
+    {
+        $user = $this->artista();
+        $this->actingAs($user)->post(route('portfolio.store'), [
+            'nome_artistico' => 'Ateliê', 'estilo_card_categorias_portfolio' => 6,
+            'cor_primaria_portfolio' => '#23774f', 'cor_secundaria_portfolio' => '#91bdac',
+        ])->assertSessionHasNoErrors();
+        $portfolio = $user->portfolioArtista()->firstOrFail();
+        $this->assertSame(6, $portfolio->estilo_card_categorias_portfolio);
+        foreach ([7, 8, 9, 1, 5, 6] as $style) {
+            $this->put(route('portfolio.update', $portfolio), ['estilo_card_categorias_portfolio' => $style])->assertSessionHasNoErrors();
+            $this->assertSame($style, $portfolio->fresh()->estilo_card_categorias_portfolio);
+            $this->assertSame('#23774f', $portfolio->fresh()->cor_primaria_portfolio);
+            $this->assertSame('Ateliê', $portfolio->fresh()->nome_artistico);
+        }
+        $this->assertSame(range(1, 9), array_keys(PortfolioArtista::estilosCardsCategorias()));
+    }
+
+    public function test_new_album_cards_keep_images_names_icons_and_safe_markup_with_an_empty_fallback(): void
+    {
+        foreach ([6, 7, 8, 9] as $style) {
+            foreach (['bi-palette', 'pixel-camera'] as $icon) {
+                $view = $this->view('usuarios.partials.categoria_card_conteudo', [
+                    'estiloId' => $style, 'imagens' => collect([(object) ['caminho_imagem' => 'exemplo.jpg'], (object) ['caminho_imagem' => 'outra.jpg']]),
+                    'titulo' => '<script>Arte</script>', 'icone' => $icon, 'descricao' => 'Trabalhos autorais',
+                ]);
+                $view->assertSee('exemplo.jpg', false)->assertSee('&lt;script&gt;Arte&lt;/script&gt;', false)
+                    ->assertDontSee('<script>Arte</script>', false)->assertSee('perfil-categoria-title', false)->assertSee('portfolio-icon', false);
+                if ($style === 6) $view->assertSee('portfolio-album-book-inner', false)->assertSee('outra.jpg', false);
+            }
+            $this->view('usuarios.partials.categoria_card_conteudo', [
+                'estiloId' => $style, 'imagens' => collect(), 'titulo' => 'Sem fotos', 'icone' => null, 'descricao' => '',
+            ])->assertSee('portfolio-album-media-empty', false)->assertSee('Sem fotos')->assertDontSee('background-image:', false);
+        }
+    }
+
     public function test_selected_areas_can_be_removed_or_cleared_without_changing_other_fields(): void
     {
         $user = $this->artista();
@@ -168,6 +204,10 @@ class PortfolioSettingsTest extends TestCase
         $this->assertSame(1, $xpath->query('//*[@id="portfolio-categories-pane"]//*[@data-area-picker]')->length);
         $this->assertSame(1, $xpath->query('//*[@role="combobox" and @aria-controls="portfolio-area-results"]')->length);
         $this->assertSame(0, $xpath->query('//input[@name="categorias[]" and @type="checkbox"]')->length);
+        $this->assertSame(9, $xpath->query('//input[@name="estilo_card_categorias_portfolio" and @type="radio"]')->length);
+        foreach ([6 => 'Livro expansível', 7 => 'Camadas 3D', 8 => 'Aura luminosa', 9 => 'Paralelogramo'] as $id => $label) {
+            $view->assertSee($label)->assertSee('perfil-categoria-card-estilo-' . $id, false);
+        }
     }
 
     public function test_optional_social_links_can_be_created_updated_and_cleared(): void
