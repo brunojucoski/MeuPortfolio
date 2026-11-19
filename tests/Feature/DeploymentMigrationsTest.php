@@ -56,6 +56,23 @@ class DeploymentMigrationsTest extends TestCase
         ])->assertExitCode(0);
     }
 
+    public function test_artist_directory_and_map_on_a_new_deployment(): void
+    {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::connection()->getPdo()->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
+        } else {
+            // The XAMPP SQLite build lacks the math functions used by the map.
+            foreach (['sin' => 'sin', 'cos' => 'cos', 'radians' => 'deg2rad', 'power' => 'pow'] as $sql => $php) {
+                DB::connection()->getPdo()->sqliteCreateFunction($sql, $php, $sql === 'power' ? 2 : 1);
+            }
+        }
+
+        $this->withoutExceptionHandling();
+        $this->get(route('usuarios.publico'))->assertOk()->assertViewHas('centroMapa', [-14.235, -51.9253]);
+        $this->getJson(route('usuarios.mapa', ['latitude' => -14.235, 'longitude' => -51.9253]))
+            ->assertOk()->assertJsonCount(0, 'artistas');
+    }
+
     public function test_complete_history_and_production_seeds_are_repeatable(): void
     {
         $this->assertSame(count(glob(database_path('migrations/*.php'))), DB::table('migrations')->count());

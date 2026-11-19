@@ -469,7 +469,7 @@ public function listarPublico(Request $request)
     return view('partials.lista_usuarios', compact('usuarios'))->render();
 }
     $primeiraLocalizacao = (clone $query)
-        ->where('compartilhar_localizacao', true)
+        ->whereRaw('compartilhar_localizacao IS TRUE')
         ->whereBetween('latitude', [-90, 90])
         ->whereBetween('longitude', [-180, 180])
         ->orderBy('id')->first(['latitude', 'longitude']);
@@ -518,7 +518,7 @@ public function listarPublico(Request $request)
         $latMax = min(90, $latitude + $deltaLatitude);
 
         $query = $this->artistasPublicosQuery($request)
-            ->where('compartilhar_localizacao', true)
+            ->whereRaw('compartilhar_localizacao IS TRUE')
             ->whereBetween('latitude', [$latMin, $latMax])
             ->whereBetween('longitude', [-180, 180]);
 
