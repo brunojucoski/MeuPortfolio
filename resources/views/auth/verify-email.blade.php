@@ -1,31 +1,17 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
+@extends('auth.form-layout')
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
-        </div>
-    @endif
+@section('auth-title', 'Confirmar e-mail')
+@section('auth-description', 'Confirme seu e-mail pelo link recebido. Se necessário, solicite um novo envio abaixo e confira também a pasta de spam.')
 
-    <div class="mt-4 flex items-center justify-between">
-        <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
-
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
-            </div>
-        </form>
-
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-
-            <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ __('Log Out') }}
-            </button>
-        </form>
-    </div>
-</x-guest-layout>
+@section('auth-form')
+    <form method="POST" action="{{ route('verification.send') }}">
+        @csrf
+        <button type="submit" class="submit-btn">Reenviar confirmação</button>
+    </form>
+    <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <p class="login-link text-center">
+            <button type="submit" class="btn p-0 text-decoration-underline" style="color: var(--roxo-appolo);">Sair da conta</button>
+        </p>
+    </form>
+@endsection

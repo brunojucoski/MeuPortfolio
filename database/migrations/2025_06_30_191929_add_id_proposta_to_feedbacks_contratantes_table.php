@@ -14,4 +14,10 @@ return new class extends Migration
     });
 }
 
+    public function down(): void
+    {
+        Schema::table('feedbacks_contratantes', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('id_proposta');
+        });
+    }
 };

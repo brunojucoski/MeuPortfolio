@@ -148,7 +148,7 @@
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-md-3 text-center text-md-start mb-4 mb-md-0 imagem_perfil">
-                        <img src="{{ $usuario->foto_perfil && file_exists(public_path('storage/' . $usuario->foto_perfil)) ? asset('storage/' . $usuario->foto_perfil) : asset('imgs/user.png') }}" class="rounded-circle  profile-img" alt="Perfil">
+                        <img src="{{ \App\Support\MediaStorage::publicUrl($usuario->foto_perfil) ?: asset('imgs/user.png') }}" class="rounded-circle  profile-img" alt="Perfil">
                     </div>
                     <div class="col-md-9">
                         <h1 class="text-nome perfil-header-name">{{ $usuario->nome }} </h1>
@@ -305,7 +305,7 @@
                                         <div class="carousel-inner">
                                             @foreach($post->imagens as $index => $img)
                                                 <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                                                    <img src="{{ asset('storage/' . $img->caminho_imagem) }}" alt="Imagem do post" class="d-block w-100 rounded gallery-img"
+                                                    <img src="{{ \App\Support\MediaStorage::publicUrl($img->caminho_imagem) }}" alt="Imagem do post" class="d-block w-100 rounded gallery-img"
                                                          data-bs-toggle="modal" data-bs-target="#modalPost{{ $post->id }}">
                                                 </div>
                                             @endforeach
@@ -337,7 +337,7 @@
                                                               data-post-id="{{ $post->id }}"
                                                               data-post-nome="{{ $post->nome }}"
                                                               data-post-descricao="{{ $post->descricao }}"
-                                                              data-post-imagens="{{ $post->imagens->map(fn($img) => ['id' => $img->id, 'caminho' => asset('storage/' . $img->caminho_imagem)])->toJson() }}" 
+                                                              data-post-imagens="{{ $post->imagens->map(fn($img) => ['id' => $img->id, 'caminho' => \App\Support\MediaStorage::publicUrl($img->caminho_imagem)])->toJson() }}"
                                                               data-post-categoria="{{ $post->id_categoria_post_portfolio ?? '' }}"
                                                               onclick="openEditPostModal(this)">
                                                           <i class="bi bi-pencil"></i> Editar
@@ -363,7 +363,7 @@
                                                         <div class="carousel-inner">
                                                             @foreach($post->imagens as $index => $img)
                                                                 <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                                                                    <img src="{{ asset('storage/' . $img->caminho_imagem) }}" class="d-block w-100 rounded" alt="Imagem Modal">
+                                                                    <img src="{{ \App\Support\MediaStorage::publicUrl($img->caminho_imagem) }}" class="d-block w-100 rounded" alt="Imagem Modal">
                                                                 </div>
                                                             @endforeach
                                                         </div>
@@ -379,7 +379,7 @@
                                                 </div>
                                                 <div class="col-lg-4">
                                                     <div class="d-flex align-items-center mb-4">
-                                                        <img src="{{ $usuario->foto_perfil ? asset('storage/' . $usuario->foto_perfil) : asset('imgs/user.png') }}" class="rounded-circle me-3" width="60" height="60" alt="Avatar">
+                                                        <img src="{{ \App\Support\MediaStorage::publicUrl($usuario->foto_perfil) ?: asset('imgs/user.png') }}" class="rounded-circle me-3" width="60" height="60" alt="Avatar">
                                                         <div>
                                                             <h5 class="mb-0 text-primary">{{ $post->nome }}</h5>
                                                             <small class="text-muted">{{ $usuario->idade }} anos | {{ $usuario->cidade ?? 'Localidade não definida' }}</small>

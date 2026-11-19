@@ -39,7 +39,7 @@ class VisualSistema
     {
         $caminho = $this->configuracao()?->{'imagem_' . $local};
         $padrao = config('visual-sistema.imagens.' . $local . '.padrao');
-        return $caminho ? asset('storage/' . $caminho) : ($padrao ? asset($padrao) : null);
+        return MediaStorage::publicUrl($caminho) ?: ($padrao ? asset($padrao) : null);
     }
 
     public function sobreTitulo(): string

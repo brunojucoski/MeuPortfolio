@@ -393,7 +393,7 @@ class UsuarioController extends Controller
         'senha' => 'nullable|string|min:8|confirmed',
         // Sem regra "image": GIF (principalmente animado) falha em alguns ambientes com "image";
         // mime/extension são conferidos por mimes + max em KB.
-        'foto_perfil' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:8192',
+        'foto_perfil' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:'.\App\Support\MediaStorage::maxFileKilobytes(8192),
     ], [
         'latitude.required' => 'Marque sua localização no mapa ou desative o compartilhamento.',
         'longitude.required' => 'Marque sua localização no mapa ou desative o compartilhamento.',
@@ -414,16 +414,19 @@ class UsuarioController extends Controller
     }
 
     if ($request->hasFile('foto_perfil')) {
-    
-        if ($usuario->foto_perfil) {
-            Storage::disk('public')->delete($usuario->foto_perfil);
-        }
-
-        $path = $request->file('foto_perfil')->store('fotos_perfil', 'public');
-        $usuario->foto_perfil = $path;
+        \App\Support\MediaStorage::validateUploadRequest($request);
+        $fotoAnterior = $usuario->foto_perfil;
+        $novaFoto = \App\Support\MediaStorage::store($request->file('foto_perfil'), 'fotos_perfil');
+        $usuario->foto_perfil = $novaFoto;
     }
 
-    $usuario->save();
+    try {
+        $usuario->save();
+    } catch (\Throwable $error) {
+        if (isset($novaFoto)) Storage::disk('public')->delete($novaFoto);
+        throw $error;
+    }
+    if (!empty($fotoAnterior)) Storage::disk('public')->delete($fotoAnterior);
 
     return redirect()->back()->with('success', 'Perfil atualizado com sucesso!');
 }
@@ -560,7 +563,7 @@ public function listarPublico(Request $request)
                 'bairro' => $artista->bairro,
                 'latitude' => (float) $artista->latitude,
                 'longitude' => (float) $artista->longitude,
-                'foto' => $artista->foto_perfil ? asset('storage/'.$artista->foto_perfil) : asset('imgs/user.png'),
+                'foto' => \App\Support\MediaStorage::publicUrl($artista->foto_perfil) ?: asset('imgs/user.png'),
                 'categorias' => $artista->categoriasArtisticas->pluck('nome')->values(),
                 'perfil_url' => route('usuarios.perfilPublico', $artista->id),
                 'avaliacao_media' => $media ? number_format($media, 1, ',', '.') : null,

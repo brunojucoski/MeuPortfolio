@@ -1,3 +1,4 @@
+@include('partials.upload_limits')
 <html> 
   <head>
     
@@ -82,7 +83,7 @@
                         <div class="mb-3 text-center">
     <label for="foto_perfil" style="cursor: pointer;">
         <img id="previewFotoPerfil"
-            src="{{ Auth::user()->foto_perfil ? asset('storage/' . Auth::user()->foto_perfil) : asset('imgs/user.png') }}"
+            src="{{ \App\Support\MediaStorage::publicUrl(Auth::user()->foto_perfil) ?: asset('imgs/user.png') }}"
             class="rounded-circle shadow"
             alt="Foto de Perfil"
             style="width: 120px; height: 120px; object-fit: cover; border: 2px solid #ccc;"

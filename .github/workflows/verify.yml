@@ -1,0 +1,64 @@
+name: Verify deployment
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: migrations_qa
+          POSTGRES_PASSWORD: isolated-migrations-qa-only
+          POSTGRES_DB: meuportfolio_migrations_qa
+        ports: ['55433:5432']
+        options: >-
+          --health-cmd "pg_isready -U migrations_qa -d meuportfolio_migrations_qa"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, pdo_pgsql, gd, intl, mbstring, zip
+          coverage: none
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: composer validate --strict
+      - run: composer audit --locked --no-interaction
+      - run: npm ci
+      - run: npm audit
+      - run: npm run build
+      - run: node --test tests/JavaScript/*.test.cjs
+      - run: php artisan test
+      - name: PostgreSQL migration history
+        run: php vendor/bin/phpunit tests/Feature/DeploymentMigrationsTest.php
+        env:
+          DEPLOYMENT_TEST_DB_DRIVER: pgsql
+      - name: Build production image without deployment secrets
+        run: docker build -t meuportfolio-ci .
+      - name: Stateless health check in a read-only container
+        shell: bash
+        run: |
+          key="base64:$(openssl rand -base64 32)"
+          trap 'docker rm -f meuportfolio-ci-health >/dev/null 2>&1 || true' EXIT
+          docker run -d --name meuportfolio-ci-health --read-only --tmpfs /tmp:rw,nosuid,size=256m \
+            -p 127.0.0.1:18080:8080 -e APP_ENV=local -e DEPLOYMENT_STRICT=false -e APP_KEY="$key" meuportfolio-ci
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18080/health; then exit 0; fi
+            sleep 2
+          done
+          docker logs meuportfolio-ci-health
+          exit 1

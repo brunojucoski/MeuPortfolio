@@ -7,7 +7,7 @@
 @endif
 <span class="perfil-categoria-preview-stack {{ $imagens->isEmpty() ? 'perfil-categoria-preview-empty' : '' }}" aria-hidden="true">
     @foreach($imagens as $previewIndex => $previewImage)
-        <span class="perfil-categoria-preview-foto perfil-categoria-preview-foto-{{ $previewIndex + 1 }}" style="background-image: url('{{ asset('storage/' . $previewImage->caminho_imagem) }}');"></span>
+        <span class="perfil-categoria-preview-foto perfil-categoria-preview-foto-{{ $previewIndex + 1 }}" style="background-image: url('{{ \App\Support\MediaStorage::publicUrl($previewImage->caminho_imagem) }}');"></span>
     @endforeach
 </span>
 <span class="perfil-categoria-overlay" aria-hidden="true"></span>

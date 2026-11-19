@@ -46,7 +46,7 @@ return [
     |
     */
 
-    'encrypt' => false,
+    'encrypt' => (bool) env('SESSION_ENCRYPT', false),
 
     /*
     |--------------------------------------------------------------------------

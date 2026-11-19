@@ -37,5 +37,11 @@ public function marcarComoLida($id)
     return response()->json(['status' => 'ok']);
 }
 
+public function lerTodas()
+{
+    Notificacao::where('usuario_id', Auth::id())->where('lida', false)->update(['lida' => true]);
+    return response()->json(['status' => 'ok']);
+}
+
 
 }

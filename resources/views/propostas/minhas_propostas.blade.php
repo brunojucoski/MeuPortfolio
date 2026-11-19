@@ -181,7 +181,7 @@
                                             @php $opts = $resp->pergunta->opcoesList(); @endphp
                                             <div>{{ isset($opts[$resp->indice_opcao]) ? $opts[$resp->indice_opcao] : '—' }}</div>
                                         @elseif($resp->pergunta && $resp->pergunta->tipo === 'anexo' && $resp->caminho_anexo)
-                                            <div><a href="{{ asset('storage/' . $resp->caminho_anexo) }}" target="_blank" rel="noopener">Baixar anexo</a></div>
+                                            <div><a href="{{ route('propostas.anexos.download', $resp->id) }}" target="_blank" rel="noopener noreferrer">Baixar anexo</a></div>
                                         @endif
                                     </li>
                                 @endforeach

@@ -220,7 +220,8 @@ class AuthFormsDesignTest extends TestCase
     {
         $owner = Usuario::create(['nome' => 'Artista', 'tipo_usuario' => 2]);
         $url = route('usuarios.update', $owner);
-        $this->putJson($url, ['nome' => 'Outro', 'compartilhar_localizacao' => 1])->assertForbidden();
+        $this->putJson($url, ['nome' => 'Outro', 'compartilhar_localizacao' => 1])->assertUnauthorized();
+        $this->put($url, ['nome' => 'Outro', 'compartilhar_localizacao' => 1])->assertRedirect(route('login'));
         $other = Usuario::create(['nome' => 'Outro', 'tipo_usuario' => 3]);
         $this->actingAs($other)->putJson($url, ['nome' => 'Outro', 'compartilhar_localizacao' => 1])->assertForbidden();
         $this->assertFalse($owner->fresh()->compartilhar_localizacao);

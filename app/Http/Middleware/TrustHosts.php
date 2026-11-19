@@ -13,8 +13,10 @@ class TrustHosts extends Middleware
      */
     public function hosts(): array
     {
-        return [
-            $this->allSubdomainsOfApplicationUrl(),
-        ];
+        $hosts = array_merge(config('deployment.trusted_hosts', []), [
+            parse_url(config('app.url'), PHP_URL_HOST), config('deployment.vercel_host'),
+        ]);
+
+        return array_map(fn ($host) => '^'.preg_quote($host, '/').'$', array_values(array_unique(array_filter($hosts))));
     }
 }

@@ -2,31 +2,31 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Providers\RouteServiceProvider;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use App\Models\Usuario;
+use Tests\Support\AuthTestCase;
 
-class RegistrationTest extends TestCase
+class RegistrationTest extends AuthTestCase
 {
-    use RefreshDatabase;
 
     public function test_registration_screen_can_be_rendered(): void
     {
         $response = $this->get('/register');
 
-        $response->assertStatus(200);
+        $response->assertRedirect(route('usuarios.cadastro'));
     }
 
     public function test_new_users_can_register(): void
     {
         $response = $this->post('/register', [
-            'name' => 'Test User',
+            'nome' => 'Pessoa de teste',
             'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'documento' => '12345678901', 'data_nasc' => '1990-01-01',
+            'senha' => 'password', 'senha_confirmation' => 'password',
+            'perfil_cadastro' => 'solicitante', 'aceite_termos' => 1,
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
+        $response->assertRedirect('/perfil');
+        $this->assertSame(3, (int) Usuario::sole()->tipo_usuario);
     }
 }

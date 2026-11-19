@@ -1,22 +1,16 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up()
     {
-        Schema::table('notificacoes', function (Blueprint $table) {
-            $table->text('mensagem')->change();
-        });
+        // mensagem was already TEXT when notificacoes was created.
     }
 
     public function down()
     {
-        Schema::table('notificacoes', function (Blueprint $table) {
-            $table->string('mensagem')->change();
-        });
+        // Do not narrow an existing TEXT column and risk truncating notifications.
     }
-}; 
+};

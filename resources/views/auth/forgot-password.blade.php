@@ -1,25 +1,21 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
-    </div>
+@extends('auth.form-layout')
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+@section('auth-title', 'Recuperar senha')
+@section('auth-description', 'Informe o e-mail da sua conta para receber um link de recuperação de senha.')
 
+@section('auth-form')
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="auth-form-fields">
+            <div class="auth-field">
+                <label for="email" class="form-label">E-mail</label>
+                <input id="email" class="form-control @error('email') is-invalid @enderror" type="email" name="email"
+                    value="{{ old('email') }}" placeholder="seu@email.com" required autofocus autocomplete="email" inputmode="email"
+                    @error('email') aria-invalid="true" aria-describedby="email-error" @enderror>
+                @error('email')<p id="email-error" class="field-hint-invalid">{{ $message }}</p>@enderror
+            </div>
         </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="submit-btn">Enviar link de recuperação</button>
     </form>
-</x-guest-layout>
+    <p class="login-link text-center"><a href="{{ route('login') }}">Voltar para entrar</a></p>
+@endsection

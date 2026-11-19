@@ -1,6 +1,6 @@
 @php
     $accountUser = Auth::user();
-    $accountPhoto = $accountUser->foto_perfil ? asset('storage/' . $accountUser->foto_perfil) : asset('imgs/user.png');
+    $accountPhoto = \App\Support\MediaStorage::publicUrl($accountUser->foto_perfil) ?: asset('imgs/user.png');
 @endphp
 <div class="account-menu" data-account-menu>
     <div class="account-menu-surface" id="accountMenuPanel">

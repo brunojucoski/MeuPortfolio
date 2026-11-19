@@ -64,7 +64,7 @@
             @method('PUT')
 
             <div class="profile-header">
-                <img src="{{ $usuario->foto_perfil ? asset('storage/' . $usuario->foto_perfil) : asset('img/default-user.png') }}" alt="Foto de perfil">
+                <img src="{{ \App\Support\MediaStorage::publicUrl($usuario->foto_perfil) ?: asset('img/default-user.png') }}" alt="Foto de perfil">
 
                 <div>
                     <label class="form-label">Editar foto de perfil</label>

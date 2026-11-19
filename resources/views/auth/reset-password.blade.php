@@ -1,39 +1,38 @@
-<x-guest-layout>
+@extends('auth.form-layout')
+
+@section('auth-title', 'Redefinir senha')
+@section('auth-description', 'Escolha uma nova senha para acessar sua conta com segurança.')
+
+@section('auth-form')
     <form method="POST" action="{{ route('password.store') }}">
         @csrf
 
-        <!-- Password Reset Token -->
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="auth-form-fields">
+            <div class="auth-field">
+                <label for="email" class="form-label">E-mail</label>
+                <input id="email" class="form-control @error('email') is-invalid @enderror" type="email" name="email"
+                    value="{{ old('email', $request->email) }}" placeholder="seu@email.com" required autofocus autocomplete="username" inputmode="email"
+                    @error('email') aria-invalid="true" aria-describedby="email-error" @enderror>
+                @error('email')<p id="email-error" class="field-hint-invalid">{{ $message }}</p>@enderror
+            </div>
+            <div class="auth-field">
+                <label for="password" class="form-label">Nova senha</label>
+                <input id="password" class="form-control @error('password') is-invalid @enderror" type="password" name="password"
+                    required autocomplete="new-password"
+                    @error('password') aria-invalid="true" aria-describedby="password-error" @enderror>
+                @error('password')<p id="password-error" class="field-hint-invalid">{{ $message }}</p>@enderror
+            </div>
+            <div class="auth-field">
+                <label for="password_confirmation" class="form-label">Confirmar nova senha</label>
+                <input id="password_confirmation" class="form-control @error('password_confirmation') is-invalid @enderror"
+                    type="password" name="password_confirmation" required autocomplete="new-password"
+                    @error('password_confirmation') aria-invalid="true" aria-describedby="password-confirmation-error" @enderror>
+                @error('password_confirmation')<p id="password-confirmation-error" class="field-hint-invalid">{{ $message }}</p>@enderror
+            </div>
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="submit-btn">Salvar nova senha</button>
     </form>
-</x-guest-layout>
+    <p class="login-link text-center"><a href="{{ route('password.request') }}">Solicitar outro link</a></p>
+@endsection

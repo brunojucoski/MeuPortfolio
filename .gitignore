@@ -8,6 +8,10 @@
 /vendor
 .env.backup
 .env.production
+.env.*.local
+.env.*.secret
+/.vercel
+/artifacts
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml

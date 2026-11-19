@@ -11,6 +11,9 @@ use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Support\MediaStorage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PropostaContratoController extends Controller
 {
@@ -28,6 +31,8 @@ class PropostaContratoController extends Controller
         if (! $guest && (int) Auth::user()->tipo_usuario !== 3) {
             abort(403, 'Apenas clientes podem enviar propostas.');
         }
+
+        MediaStorage::validateUploadRequest($request);
 
         $request->validate([
             'id_artista' => 'required|exists:portfolio_artistas,id',
@@ -59,7 +64,7 @@ class PropostaContratoController extends Controller
             } elseif ($p->tipo === 'opcoes') {
                 $rules['respostas.'.$p->id] = 'required|integer|min:0';
             } elseif ($p->tipo === 'anexo') {
-                $rules['anexos.'.$p->id] = 'required|file|max:10240|mimes:jpeg,jpg,png,gif,pdf,doc,docx,zip,txt';
+                $rules['anexos.'.$p->id] = 'required|file|max:'.MediaStorage::maxFileKilobytes(10240).'|mimes:jpeg,jpg,png,gif,pdf,doc,docx,zip,txt';
             }
         }
         $request->validate($rules);
@@ -82,31 +87,41 @@ class PropostaContratoController extends Controller
             }
         }
 
-        $proposta = PropostaContrato::create([
-            'id_artista' => $portfolio->id,
-            'id_categoria_orcamento' => $categoria->id,
-            'categoria_orcamento_nome' => $categoria->nome,
-            'id_usuario_avaliador' => $idAvaliador,
-            'status' => 'Aguardando resposta',
-        ]);
-
-        foreach ($perguntas as $p) {
-            $row = [
-                'id_proposta' => $proposta->id,
-                'id_pergunta' => $p->id,
-                'texto_resposta' => null,
-                'indice_opcao' => null,
-                'caminho_anexo' => null,
-            ];
-            if ($p->tipo === 'texto') {
-                $row['texto_resposta'] = $request->input('respostas.'.$p->id);
-            } elseif ($p->tipo === 'opcoes') {
-                $row['indice_opcao'] = (int) $request->input('respostas.'.$p->id);
-            } elseif ($p->tipo === 'anexo') {
-                $file = $request->file('anexos.'.$p->id);
-                $row['caminho_anexo'] = $file->store('propostas_anexos', 'public');
-            }
-            RespostaPropostaPergunta::create($row);
+        $arquivos = [];
+        try {
+            $proposta = DB::transaction(function () use ($portfolio, $categoria, $idAvaliador, $perguntas, $request, &$arquivos) {
+                $proposta = PropostaContrato::create([
+                    'id_artista' => $portfolio->id,
+                    'id_categoria_orcamento' => $categoria->id,
+                    'categoria_orcamento_nome' => $categoria->nome,
+                    'id_usuario_avaliador' => $idAvaliador,
+                    'status' => 'Aguardando resposta',
+                ]);
+                foreach ($perguntas as $p) {
+                    $row = [
+                        'id_proposta' => $proposta->id,
+                        'id_pergunta' => $p->id,
+                        'texto_resposta' => null,
+                        'indice_opcao' => null,
+                        'caminho_anexo' => null,
+                    ];
+                    if ($p->tipo === 'texto') {
+                        $row['texto_resposta'] = $request->input('respostas.'.$p->id);
+                    } elseif ($p->tipo === 'opcoes') {
+                        $row['indice_opcao'] = (int) $request->input('respostas.'.$p->id);
+                    } elseif ($p->tipo === 'anexo') {
+                        $file = $request->file('anexos.'.$p->id);
+                        $row['caminho_anexo'] = MediaStorage::store($file, rtrim(MediaStorage::PRIVATE_ATTACHMENTS, '/'), 'private');
+                        $arquivos[] = $row['caminho_anexo'];
+                    }
+                    RespostaPropostaPergunta::create($row);
+                }
+                return $proposta;
+            });
+        } catch (\Throwable $error) {
+            // A rolled-back proposal must not leave uploaded private objects orphaned.
+            if ($arquivos) Storage::disk('private')->delete($arquivos);
+            throw $error;
         }
 
         $portfolio->load('usuario');
@@ -155,6 +170,39 @@ class PropostaContratoController extends Controller
         }
 
         return redirect()->back()->with('success', 'Proposta enviada com sucesso! O profissional não possui telefone cadastrado; não foi possível sugerir envio pelo WhatsApp.');
+    }
+
+    public function downloadAnexo(Request $request, RespostaPropostaPergunta $resposta)
+    {
+        $usuario = $request->user();
+        abort_unless($usuario, 401);
+        $proposta = $resposta->proposta;
+        abort_unless($proposta, 404);
+        $admin = (int) $usuario->tipo_usuario === 1;
+        $cliente = (int) $usuario->tipo_usuario === 3
+            && $usuario->email !== Usuario::EMAIL_VISITANTE_NAO_IDENTIFICADO
+            && (int) $proposta->id_usuario_avaliador === (int) $usuario->id;
+        $artista = (int) $usuario->tipo_usuario === 2
+            && (int) $proposta->artista?->id_usuario === (int) $usuario->id;
+        abort_unless($admin || $cliente || $artista, 403);
+
+        $path = $resposta->caminho_anexo;
+        // Do not fall back to the old public bucket, even for authorized users.
+        abort_unless(MediaStorage::validKey($path) && str_starts_with($path, MediaStorage::PRIVATE_ATTACHMENTS), 404);
+        $disk = Storage::disk('private');
+        abort_unless($disk->exists($path), 404);
+        $name = 'anexo-'.$resposta->id.'.'.(pathinfo($path, PATHINFO_EXTENSION) ?: 'bin');
+        $headers = ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff', 'Referrer-Policy' => 'no-referrer'];
+        if (config('filesystems.disks.private.driver') === 's3') {
+            $url = $disk->temporaryUrl($path, now()->addSeconds(60), [
+                'ResponseContentDisposition' => 'attachment; filename="'.$name.'"',
+                'ResponseContentType' => 'application/octet-stream',
+                'ResponseCacheControl' => 'private, no-store',
+            ]);
+            return redirect()->away($url)->withHeaders($headers);
+        }
+
+        return $disk->download($path, $name, $headers + ['Content-Type' => 'application/octet-stream']);
     }
 
     public function show($id)

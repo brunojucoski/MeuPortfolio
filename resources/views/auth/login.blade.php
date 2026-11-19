@@ -78,6 +78,8 @@
             <button type="submit" class="submit-btn">Entrar</button>
         </form>
 
+        <a href="{{ route('password.request') }}" class="d-block text-center mt-3">Esqueci minha senha</a>
+
         <div class="google-auth-actions">
             @if(\App\Support\GoogleOAuth::configured())
                 <form id="googleLoginForm" method="POST" action="{{ route('google.redirect') }}">

@@ -37,11 +37,41 @@ return [
         ],
 
         'public' => [
+            'driver' => env('PUBLIC_STORAGE_DRIVER', 'local'),
+            'root' => env('PUBLIC_STORAGE_DRIVER', 'local') === 's3' ? '' : storage_path('app/public'),
+            'url' => env('PUBLIC_STORAGE_URL', env('PUBLIC_STORAGE_DRIVER', 'local') === 's3' ? null : env('APP_URL').'/storage'),
+            'key' => env('STORAGE_S3_KEY'),
+            'secret' => env('STORAGE_S3_SECRET'),
+            'region' => env('STORAGE_S3_REGION', 'us-east-1'),
+            'bucket' => env('PUBLIC_STORAGE_BUCKET'),
+            'endpoint' => env('STORAGE_S3_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
+            'stream_reads' => true,
+            'throw' => true,
+        ],
+
+        'private' => [
+            'driver' => env('PRIVATE_STORAGE_DRIVER', 'local'),
+            'root' => env('PRIVATE_STORAGE_DRIVER', 'local') === 's3' ? '' : storage_path('app/private'),
+            'key' => env('STORAGE_S3_KEY'),
+            'secret' => env('STORAGE_S3_SECRET'),
+            'region' => env('STORAGE_S3_REGION', 'us-east-1'),
+            'bucket' => env('PRIVATE_STORAGE_BUCKET'),
+            'endpoint' => env('STORAGE_S3_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
+            'stream_reads' => true,
+            // Supabase bucket privacy is configured in its dashboard, not with S3 ACLs.
+            'throw' => true,
+        ],
+
+        'legacy_public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
-            'visibility' => 'public',
-            'throw' => false,
+            'throw' => true,
         ],
 
         's3' => [

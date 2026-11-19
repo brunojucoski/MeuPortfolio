@@ -16,6 +16,8 @@ class Handler extends ExceptionHandler
         'current_password',
         'password',
         'password_confirmation',
+        'senha',
+        'senha_confirmation',
     ];
 
     /**
@@ -24,7 +26,9 @@ class Handler extends ExceptionHandler
     public function register(): void
     {
         $this->reportable(function (Throwable $e) {
-            //
+            if (class_exists(\Sentry\Laravel\Integration::class)) {
+                \Sentry\Laravel\Integration::captureUnhandledException($e);
+            }
         });
     }
 }

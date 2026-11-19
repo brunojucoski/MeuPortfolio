@@ -30,8 +30,6 @@ return new class extends Migration
         Schema::table('feedbacks_artistas', function (Blueprint $table) {
             // Remove a chave estrangeira primeiro
             $table->dropConstrainedForeignId('id_proposta');
-            // Depois remove a coluna
-            $table->dropColumn('id_proposta');
         });
     }
 };

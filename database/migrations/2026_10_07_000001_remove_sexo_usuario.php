@@ -10,8 +10,10 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasColumn('usuarios', 'sexo_usuario')) {
-            Schema::table('usuarios', function (Blueprint $table) {
-                if (DB::getDriverName() !== 'sqlite') {
+            $hasForeignKey = collect(Schema::getForeignKeys('usuarios'))
+                ->contains(fn (array $key) => in_array('sexo_usuario', $key['columns'], true));
+            Schema::table('usuarios', function (Blueprint $table) use ($hasForeignKey) {
+                if ($hasForeignKey) {
                     $table->dropForeign(['sexo_usuario']);
                 }
                 $table->dropColumn('sexo_usuario');

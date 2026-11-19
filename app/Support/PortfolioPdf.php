@@ -5,7 +5,6 @@ namespace App\Support;
 use App\Models\PortfolioArtista;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class PortfolioPdf
@@ -152,14 +151,11 @@ class PortfolioPdf
 
     private function image(?string $relative): ?array
     {
-        if (!$relative || str_contains($relative, "\0") || preg_match('~(^|[/\\\\])\.\.([/\\\\]|$)|^[a-z]+:~i', $relative)) return null;
-        $root = realpath(Storage::disk('public')->path(''));
-        $path = realpath(Storage::disk('public')->path($relative));
-        if (!$root || !$path || !str_starts_with(strtolower($path), strtolower($root . DIRECTORY_SEPARATOR))
-            || !is_file($path) || filesize($path) > 20 * 1024 * 1024) return null;
-        $size = @getimagesize($path);
+        $bytes = MediaStorage::publicImageBytes($relative);
+        if ($bytes === null) return null;
+        $size = @getimagesizefromstring($bytes);
         if (!$size || $size[0] * $size[1] > 25000000 || !in_array($size[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_GIF, IMAGETYPE_WEBP], true)) return null;
-        $source = @imagecreatefromstring(file_get_contents($path));
+        $source = @imagecreatefromstring($bytes);
         if (!$source) return null;
         $scale = min(1, 1400 / $size[0], 1800 / $size[1]);
         $width = max(1, (int) round($size[0] * $scale));

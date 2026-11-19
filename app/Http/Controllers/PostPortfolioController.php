@@ -10,6 +10,8 @@ use App\Models\TipoUsuario;
 use App\Models\PortfolioArtista;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Support\MediaStorage;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -41,6 +43,8 @@ class PostPortfolioController extends Controller
              abort(403, 'Acesso não autorizado.');
          }
 
+        MediaStorage::validateUploadRequest($request);
+
         
          $portfolio = $user->portfolioArtista;
          if (!$portfolio) {
@@ -55,7 +59,7 @@ class PostPortfolioController extends Controller
             'nome' => 'required|string|max:255',
             'descricao' => 'required|string|max:1000',
             'imagens' => 'nullable|array|max:20',
-            'imagens.*' => 'file|mimes:jpeg,jpg,png,gif|max:8192',
+            'imagens.*' => 'file|mimes:jpeg,jpg,png,gif|max:'.MediaStorage::maxFileKilobytes(8192),
             'id_categoria_post_portfolio' => 'nullable|integer|exists:categorias_posts_portfolio,id',
         ]);
 
@@ -67,23 +71,24 @@ class PostPortfolioController extends Controller
             }
         }
 
-        // Cria o post
-    
-        $post = PostPortfolio::create([
-            'nome' => $request->nome,
-            'descricao' => $request->descricao,
-            'id_portfolio' => $portfolio->id,
-            'id_categoria_post_portfolio' => $idCategoria ? (int) $idCategoria : null,
-        ]);
-        if ($request->hasFile('imagens')) { 
-            foreach ($request->file('imagens') as $imagem) {
-                $caminho = $imagem->store('posts', 'public');
-    
-                PostImagem::create([
-                    'post_id' => $post->id,
-                    'caminho_imagem' => $caminho,
+        $novasImagens = [];
+        try {
+            DB::transaction(function () use ($request, $portfolio, $idCategoria, &$novasImagens) {
+                $post = PostPortfolio::create([
+                    'nome' => $request->nome,
+                    'descricao' => $request->descricao,
+                    'id_portfolio' => $portfolio->id,
+                    'id_categoria_post_portfolio' => $idCategoria ? (int) $idCategoria : null,
                 ]);
-            }
+                foreach ($request->file('imagens', []) as $imagem) {
+                    $caminho = MediaStorage::store($imagem, 'posts');
+                    $novasImagens[] = $caminho;
+                    PostImagem::create(['post_id' => $post->id, 'caminho_imagem' => $caminho]);
+                }
+            });
+        } catch (\Throwable $error) {
+            if ($novasImagens) Storage::disk('public')->delete($novasImagens);
+            throw $error;
         }
     
         return redirect()->back()->with('success', 'Post criado com sucesso!');
@@ -127,6 +132,8 @@ class PostPortfolioController extends Controller
             abort(403, 'Você não tem permissão para atualizar este post.');
         }
 
+        MediaStorage::validateUploadRequest($request);
+
         if ($request->input('id_categoria_post_portfolio') === '' || $request->input('id_categoria_post_portfolio') === null) {
             $request->merge(['id_categoria_post_portfolio' => null]);
         }
@@ -135,7 +142,7 @@ class PostPortfolioController extends Controller
             'nome' => 'required|string|max:255',
             'descricao' => 'required|string|max:1000',
             'imagens' => 'nullable|array|max:20',
-            'imagens.*' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:8192', // Permite novas imagens, GIF incluído
+            'imagens.*' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:'.MediaStorage::maxFileKilobytes(8192),
             'imagens_para_remover' => 'nullable|array', // Array de IDs de imagens a serem removidas
             'imagens_para_remover.*' => 'exists:posts_imgs,id', // Valida se os IDs existem na tabela
             'id_categoria_post_portfolio' => 'nullable|integer|exists:categorias_posts_portfolio,id',
@@ -150,35 +157,33 @@ class PostPortfolioController extends Controller
             }
         }
 
-        // Atualiza os campos de texto do post
-        $post->update([
-            'nome' => $request->nome,
-            'descricao' => $request->descricao,
-            'id_categoria_post_portfolio' => $idCategoria ? (int) $idCategoria : null,
-        ]);
-
-        // 1. Remover imagens existentes (se IDs foram enviados para remoção)
-        if ($request->has('imagens_para_remover')) {
-            $imagensParaRemover = $request->input('imagens_para_remover');
-            foreach ($imagensParaRemover as $imagemId) {
-                $imagem = PostImagem::find($imagemId);
-                if ($imagem && $imagem->post_id === $post->id) { // Garante que a imagem pertence a este post
-                    Storage::disk('public')->delete($imagem->caminho_imagem); // Deleta do storage
-                    $imagem->delete(); // Deleta do banco de dados
-                }
-            }
-        }
-
-        // 2. Adicionar novas imagens (se foram enviadas)
-        if ($request->hasFile('imagens')) {
-            foreach ($request->file('imagens') as $imagemFile) {
-                $caminho = $imagemFile->store('posts', 'public'); // Salva no storage
-                PostImagem::create([
-                    'post_id' => $post->id,
-                    'caminho_imagem' => $caminho,
+        $novasImagens = [];
+        $antigasImagens = [];
+        try {
+            DB::transaction(function () use ($request, $post, $idCategoria, &$novasImagens, &$antigasImagens) {
+                $post->update([
+                    'nome' => $request->nome,
+                    'descricao' => $request->descricao,
+                    'id_categoria_post_portfolio' => $idCategoria ? (int) $idCategoria : null,
                 ]);
-            }
+                foreach ($request->input('imagens_para_remover', []) as $imagemId) {
+                    $imagem = PostImagem::find($imagemId);
+                    if ($imagem && $imagem->post_id === $post->id) {
+                        $antigasImagens[] = $imagem->caminho_imagem;
+                        $imagem->delete();
+                    }
+                }
+                foreach ($request->file('imagens', []) as $imagemFile) {
+                    $caminho = MediaStorage::store($imagemFile, 'posts');
+                    $novasImagens[] = $caminho;
+                    PostImagem::create(['post_id' => $post->id, 'caminho_imagem' => $caminho]);
+                }
+            });
+        } catch (\Throwable $error) {
+            if ($novasImagens) Storage::disk('public')->delete($novasImagens);
+            throw $error;
         }
+        if ($antigasImagens) Storage::disk('public')->delete($antigasImagens);
 
         return redirect()->back()->with('success', 'Post atualizado com sucesso!');
     }

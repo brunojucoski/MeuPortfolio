@@ -19,13 +19,22 @@ use App\Http\Controllers\PropostaContratoController;
 use App\Http\Controllers\PerguntaPropostaContratoController;
 use Illuminate\Http\Request;
 
+Route::get('/health', \App\Http\Controllers\HealthController::class)->name('health')
+    ->withoutMiddleware([
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \App\Http\Middleware\VerifyCsrfToken::class,
+        \App\Http\Middleware\EncryptCookies::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+    ]);
+
 
 //rotas admin : 
 Route::get('/login_interno', [\App\Http\Controllers\LoginInternoController::class, 'create'])->name('loginInterno.form');
 Route::post('/login_interno', [\App\Http\Controllers\LoginInternoController::class, 'store'])
     ->middleware('throttle:8,1')->name('loginInterno');
 
-Route::get('/meu-perfil', [UsuarioController::class, 'editInterno'])->name('usuarios.editInterno');
+Route::get('/meu-perfil', [UsuarioController::class, 'editInterno'])->middleware('auth')->name('usuarios.editInterno');
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/configuracoes-visuais', [\App\Http\Controllers\ConfiguracaoSistemaController::class, 'edit'])->name('admin.configuracoes.edit');
@@ -76,7 +85,9 @@ Route::middleware('auth')->group(function () {
 
 
 
-Route::resource('usuarios', UsuarioController::class);
+Route::resource('usuarios', UsuarioController::class)->except('update')->middleware(['auth', 'admin']);
+Route::match(['put', 'patch'], '/usuarios/{usuario}', [UsuarioController::class, 'update'])
+    ->middleware('auth')->name('usuarios.update');
 
 Route::get('/notificacoes', [NotificacaoController::class, 'index'])->middleware('auth');
 
@@ -145,6 +156,8 @@ Route::middleware('auth')->post('/propostas/{proposta}/finalizar', [PropostaCont
     ->name('propostas.finalizar');
 
 Route::middleware('auth')->get('/minhas-propostas', [PropostaContratoController::class, 'minhasPropostas'])->name('propostas.minhas');
+Route::get('/propostas/anexos/{resposta}/download', [PropostaContratoController::class, 'downloadAnexo'])
+    ->middleware('auth')->name('propostas.anexos.download');
 
 
      
@@ -153,8 +166,8 @@ Route::get('/artistas', [UsuarioController::class, 'listarPublico'])->name('usua
 Route::get('/artistas/mapa', [UsuarioController::class, 'artistasMapa'])->name('usuarios.mapa');
 
 Route::get('/perfil/{id}', [UsuarioController::class, 'showPublic'])->name('usuarios.public');
-Route::post('/notificacoes/ler-todas', [NotificacaoController::class, 'lerTodas'])->name('notificacoes.lerTodas');
-Route::post('/notificacoes/{id}/marcar-lida', [NotificacaoController::class, 'marcarComoLida']);
+Route::post('/notificacoes/ler-todas', [NotificacaoController::class, 'lerTodas'])->middleware('auth')->name('notificacoes.lerTodas');
+Route::post('/notificacoes/{id}/marcar-lida', [NotificacaoController::class, 'marcarComoLida'])->middleware('auth');
 
 
 
@@ -169,10 +182,4 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/feedbacks/artistas', [FeedbackArtistaController::class, 'store'])->name('feedbacks.artistas.store');
     Route::post('/feedbacks/contratantes', [FeedbackContratanteController::class, 'store'])->name('feedbacks.contratantes.store');
 });
-//LOGOUT
-Route::post('/logout', function () {
-    Auth::logout();
-    return redirect('/');
-})->name('logout');
-
 require __DIR__.'/auth.php';

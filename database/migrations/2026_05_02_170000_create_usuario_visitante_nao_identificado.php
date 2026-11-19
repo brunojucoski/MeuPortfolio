@@ -16,6 +16,11 @@ return new class extends Migration
 
         $tipoContratante = DB::table('tipo_usuario')->where('nome', 'contratante')->value('id');
         if (! $tipoContratante) {
+            // Also support older databases whose role migration ran without seeds.
+            DB::table('tipo_usuario')->insertOrIgnore(['id' => 3, 'nome' => 'contratante']);
+            if (DB::table('tipo_usuario')->where('id', 3)->value('nome') !== 'contratante') {
+                throw new LogicException('O tipo de usuario 3 deve corresponder a contratante.');
+            }
             $tipoContratante = 3;
         }
 

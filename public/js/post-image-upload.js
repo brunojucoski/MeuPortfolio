@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!validType || file.size === 0) {
                     messages.push(`${file.name}: selecione uma imagem JPG, PNG ou GIF.`);
                 } else if (file.size > maxSize) {
-                    messages.push(`${file.name}: o limite por imagem é 8 MB.`);
+                    messages.push(`${file.name}: o limite por imagem é ${sizeLabel(maxSize)}.`);
                 } else if (selected.length >= maxFiles) {
                     messages.push(`O limite é de ${maxFiles} imagens.`);
                     break;

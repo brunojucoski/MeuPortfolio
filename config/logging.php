@@ -102,7 +102,7 @@ return [
             'with' => [
                 'stream' => 'php://stderr',
             ],
-            'processors' => [PsrLogMessageProcessor::class],
+            'processors' => [\App\Support\PrivacyLogProcessor::class],
         ],
 
         'syslog' => [

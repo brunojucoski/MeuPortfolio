@@ -72,5 +72,6 @@
 </form>
 @endsection
 @push('scripts')
+    @include('partials.upload_limits')
     <script src="{{ asset('js/configuracoes-visuais.js') }}" defer></script>
 @endpush

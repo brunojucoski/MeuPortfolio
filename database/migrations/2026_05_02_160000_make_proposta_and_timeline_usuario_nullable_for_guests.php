@@ -10,60 +10,26 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('proposta_contrato', function (Blueprint $table) {
-            $table->dropForeign(['id_usuario_avaliador']);
+            $table->unsignedBigInteger('id_usuario_avaliador')->nullable()->change();
         });
-
-        DB::statement('ALTER TABLE proposta_contrato MODIFY id_usuario_avaliador BIGINT UNSIGNED NULL');
-
-        Schema::table('proposta_contrato', function (Blueprint $table) {
-            $table->foreign('id_usuario_avaliador')
-                ->references('id')
-                ->on('usuarios')
-                ->cascadeOnDelete();
-        });
-
         Schema::table('timeline_proposta_contrato', function (Blueprint $table) {
-            $table->dropForeign(['id_usuario']);
-        });
-
-        DB::statement('ALTER TABLE timeline_proposta_contrato MODIFY id_usuario BIGINT UNSIGNED NULL');
-
-        Schema::table('timeline_proposta_contrato', function (Blueprint $table) {
-            $table->foreign('id_usuario')
-                ->references('id')
-                ->on('usuarios')
-                ->cascadeOnDelete();
+            $table->unsignedBigInteger('id_usuario')->nullable()->change();
         });
     }
 
     public function down(): void
     {
-        DB::table('proposta_contrato')->whereNull('id_usuario_avaliador')->delete();
+        // Refuse rollback rather than delete guest proposals and cascaded files.
+        if (DB::table('proposta_contrato')->whereNull('id_usuario_avaliador')->exists()
+            || DB::table('timeline_proposta_contrato')->whereNull('id_usuario')->exists()) {
+            throw new LogicException('Nao e possivel reverter enquanto houver propostas ou mensagens de visitantes.');
+        }
 
         Schema::table('timeline_proposta_contrato', function (Blueprint $table) {
-            $table->dropForeign(['id_usuario']);
+            $table->unsignedBigInteger('id_usuario')->nullable(false)->change();
         });
-
-        DB::statement('ALTER TABLE timeline_proposta_contrato MODIFY id_usuario BIGINT UNSIGNED NOT NULL');
-
-        Schema::table('timeline_proposta_contrato', function (Blueprint $table) {
-            $table->foreign('id_usuario')
-                ->references('id')
-                ->on('usuarios')
-                ->cascadeOnDelete();
-        });
-
         Schema::table('proposta_contrato', function (Blueprint $table) {
-            $table->dropForeign(['id_usuario_avaliador']);
-        });
-
-        DB::statement('ALTER TABLE proposta_contrato MODIFY id_usuario_avaliador BIGINT UNSIGNED NOT NULL');
-
-        Schema::table('proposta_contrato', function (Blueprint $table) {
-            $table->foreign('id_usuario_avaliador')
-                ->references('id')
-                ->on('usuarios')
-                ->cascadeOnDelete();
+            $table->unsignedBigInteger('id_usuario_avaliador')->nullable(false)->change();
         });
     }
 };

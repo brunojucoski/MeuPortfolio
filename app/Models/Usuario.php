@@ -22,6 +22,8 @@ class Usuario extends Authenticatable
 
     protected $table = 'usuarios';
 
+    protected $authPasswordName = 'senha';
+
     protected $fillable = [
         'nome', 
         'documento', 
@@ -42,6 +44,7 @@ class Usuario extends Authenticatable
     protected $hidden = [
         'senha', 'remember_token', 'latitude', 'longitude', 'google_id',
         'termos_aceitos_em', 'termos_versao', 'localizacao_autorizada_em',
+        'documento', 'data_nasc', 'cep', 'bairro', 'endereco',
     ];
 
     protected $casts = [

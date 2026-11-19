@@ -65,7 +65,7 @@
                                         <label class="portfolio-export-post">
                                             <input type="checkbox" name="posts[]" value="{{ $post->id }}" form="portfolioExportForm" data-export-post>
                                             @if($post->imagens->isNotEmpty())
-                                                <img src="{{ asset('storage/' . $post->imagens->first()->caminho_imagem) }}" alt="" loading="lazy">
+                                                <img src="{{ \App\Support\MediaStorage::publicUrl($post->imagens->first()->caminho_imagem) }}" alt="" loading="lazy">
                                             @else
                                                 <span class="portfolio-export-placeholder"><i class="bi bi-image" aria-hidden="true"></i></span>
                                             @endif

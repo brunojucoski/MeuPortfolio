@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
+use App\Support\MediaStorage;
 
 class ConfiguracaoSistemaController extends Controller
 {
@@ -17,6 +18,7 @@ class ConfiguracaoSistemaController extends Controller
 
     public function update(Request $request)
     {
+        MediaStorage::validateUploadRequest($request);
         $regras = [
             'cor_base' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'sobre_titulo' => ['required', 'string', 'max:120'],
@@ -46,7 +48,7 @@ class ConfiguracaoSistemaController extends Controller
         try {
             foreach (config('visual-sistema.imagens') as $local => $imagem) {
                 if (!$request->boolean('restaurar_' . $local) && $request->hasFile('imagem_' . $local)) {
-                    $caminho = $request->file('imagem_' . $local)->store('sistema/imagens', 'public');
+                    $caminho = MediaStorage::store($request->file('imagem_' . $local), 'sistema/imagens');
                     if (!$caminho) throw new \RuntimeException('Não foi possível salvar a imagem.');
                     $novas['imagem_' . $local] = $caminho;
                 }

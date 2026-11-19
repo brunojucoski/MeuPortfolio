@@ -38,6 +38,12 @@ class PortfolioPdfController extends Controller
             $lock->release();
         }
 
+        $maxBytes = max(0, (int) config('uploads.pdf_max_bytes', 0));
+        if (config('uploads.vercel')) $maxBytes = $maxBytes ? min($maxBytes, 4 * 1024 * 1024) : 4 * 1024 * 1024;
+        if ($maxBytes && strlen($pdf) > $maxBytes) {
+            throw ValidationException::withMessages(['exportacao' => 'O PDF excede o limite desta hospedagem. Selecione menos posts ou albuns e exporte em partes.']);
+        }
+
         // Avoid placing deselected personal information in filenames or PDF metadata.
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',

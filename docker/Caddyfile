@@ -1,0 +1,13 @@
+{
+    admin off
+    auto_https off
+    frankenphp
+}
+
+:{$PORT:8080} {
+    root * /app/public
+    encode zstd gzip
+    @hidden path_regexp hidden (^|/)\.
+    respond @hidden 404
+    php_server
+}
