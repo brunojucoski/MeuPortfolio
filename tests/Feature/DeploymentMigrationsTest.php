@@ -11,6 +11,8 @@ use Tests\TestCase;
 
 class DeploymentMigrationsTest extends TestCase
 {
+    use \Tests\Support\ConfirmaCadastro;
+
     private ?string $isolatedSchema = null;
 
     protected function setUp(): void
@@ -71,6 +73,24 @@ class DeploymentMigrationsTest extends TestCase
         $this->get(route('usuarios.publico'))->assertOk()->assertViewHas('centroMapa', [-14.235, -51.9253]);
         $this->getJson(route('usuarios.mapa', ['latitude' => -14.235, 'longitude' => -51.9253]))
             ->assertOk()->assertJsonCount(0, 'artistas');
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['artista'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['solicitante'])]
+    public function test_new_account_opens_profile_after_confirmation(string $tipo): void
+    {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::connection()->getPdo()->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
+        }
+        $this->withoutExceptionHandling();
+        $this->cadastrarEConfirmar(route('usuarios.cadastrar'), [
+            'nome' => 'Perfil de teste', 'email' => 'perfil@example.test',
+            'documento' => '12345678901', 'data_nasc' => '1990-01-01',
+            'senha' => 'password', 'senha_confirmation' => 'password',
+            'perfil_cadastro' => $tipo, 'aceite_termos' => 1,
+        ])->assertRedirect(route('perfil'));
+        $this->get(route('perfil'))->assertOk()->assertSee('Perfil de teste');
+        $this->getJson('/notificacoes')->assertOk()->assertExactJson([]);
     }
 
     public function test_complete_history_and_production_seeds_are_repeatable(): void

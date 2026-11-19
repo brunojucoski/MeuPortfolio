@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 
@@ -20,6 +21,12 @@ class Notificacao extends Model
         'lida',
         'proposta_id', 
     ];
+
+    public function scopeNaoLidas(Builder $query): Builder
+    {
+        // A SQL boolean literal also works with PostgreSQL's emulated prepares.
+        return $query->whereRaw('lida = FALSE');
+    }
 
 
     public function destinatario() {

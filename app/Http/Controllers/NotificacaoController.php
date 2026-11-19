@@ -16,7 +16,7 @@ public function index()
     $usuario = Auth::user();
 
     $notificacoes = Notificacao::where('usuario_id', $usuario->id)
-        ->where('lida', false)
+        ->naoLidas()
         ->with('proposta', 'proposta.usuarioAvaliador')
         ->latest()
         ->take(5)
@@ -31,7 +31,7 @@ public function marcarComoLida($id)
         ->where('usuario_id', auth()->id())
         ->firstOrFail();
 
-    $notificacao->lida = true;
+    $notificacao->lida = '1';
     $notificacao->save();
 
     return response()->json(['status' => 'ok']);
@@ -39,7 +39,7 @@ public function marcarComoLida($id)
 
 public function lerTodas()
 {
-    Notificacao::where('usuario_id', Auth::id())->where('lida', false)->update(['lida' => true]);
+    Notificacao::where('usuario_id', Auth::id())->naoLidas()->update(['lida' => '1']);
     return response()->json(['status' => 'ok']);
 }
 

@@ -25,7 +25,7 @@
                     <button type="button" class="navbar-notification-button position-relative" id="notificacoesDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notificações" title="Notificações" onclick="carregarNotificacoes()">
                         <i class="bi bi-bell" aria-hidden="true"></i>
                         @php
-                            $naoLidas = \App\Models\Notificacao::where('usuario_id', Auth::id())->where('lida', false)->count();
+                            $naoLidas = Auth::user()->notificacoes()->naoLidas()->count();
                         @endphp
                         <span class="notification-count badge rounded-pill bg-secondary" id="contadorNotificacoes" @if($naoLidas === 0) hidden @endif>{{ $naoLidas }}</span>
                     </button>

@@ -41,17 +41,13 @@
 
 <main class="perfil-publico-page">
 
-    {{-- Funções de formatação (mantidas) --}}
     @php
-        function formatarCep($cep) {
-            return preg_replace('/(\d{5})(\d{3})/', '$1-$2', $cep);
-        }
-        function formatarTelefone($tel) {
-            $tel = preg_replace('/\D/', '', $tel);
+        $formatarTelefone = static function ($tel) {
+            $tel = preg_replace('/\D/', '', (string) $tel);
             return (strlen($tel) === 11)
                 ? preg_replace('/(\d{2})(\d{5})(\d{4})/', '($1) $2-$3', $tel)
                 : preg_replace('/(\d{2})(\d{4})(\d{4})/', '($1) $2-$3', $tel);
-        }
+        };
     @endphp
 
   
@@ -160,7 +156,7 @@
                         <div class="d-none d-lg-block perfil-dados-resumo">
                             <p class="text-muted mb-1"><i class="bi bi-calendar"></i> {{ $usuario->idade }} anos </p>
                             <p class="text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ $usuario->cidade ?? 'Localidade não definida' }} </p>
-                            <p class="text-muted mb-1"><i class="bi bi-telephone"></i> {{ formatarTelefone($usuario->telefone) }}</p>
+                            <p class="text-muted mb-1"><i class="bi bi-telephone"></i> {{ $formatarTelefone($usuario->telefone) }}</p>
                             @include('usuarios.partials.endereco_publico')
                             @if($usuario->tipo_usuario == 2)
                                 <p class="mb-2"><i class="bi bi-brush"></i> {{ $portfolio->descricao ?? 'Descrição do portfólio não disponível' }}</p>
@@ -176,7 +172,7 @@
                                 <div class="perfil-mais-info-inner border rounded-3 p-3">
                                     <p class="text-muted mb-2"><i class="bi bi-calendar"></i> {{ $usuario->idade }} anos </p>
                                     <p class="text-muted mb-2"><i class="bi bi-geo-alt"></i> {{ $usuario->cidade ?? 'Localidade não definida' }} </p>
-                                    <p class="text-muted mb-2"><i class="bi bi-telephone"></i> {{ formatarTelefone($usuario->telefone) }}</p>
+                                    <p class="text-muted mb-2"><i class="bi bi-telephone"></i> {{ $formatarTelefone($usuario->telefone) }}</p>
                                     @include('usuarios.partials.endereco_publico')
                                     @if($usuario->tipo_usuario == 2)
                                         <p class="mb-0"><i class="bi bi-brush"></i> {{ $portfolio->descricao ?? 'Descrição do portfólio não disponível' }}</p>
