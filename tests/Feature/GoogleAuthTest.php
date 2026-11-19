@@ -21,6 +21,8 @@ use Tests\TestCase;
 
 class GoogleAuthTest extends TestCase
 {
+    use \Tests\Support\ConfirmaCadastro;
+
     private MockHandler $http;
     private array $requests = [];
 
@@ -155,7 +157,7 @@ class GoogleAuthTest extends TestCase
     public function test_new_clients_complete_with_trusted_identity_terms_and_private_location(): void
     {
         $state = $this->begin(); $this->identity(); $this->returnFromGoogle($state);
-        $this->post(route('google.store'), $this->payload(['latitude' => -20, 'longitude' => -40]))->assertRedirect(route('perfil'));
+        $this->cadastrarEConfirmar(route('google.store'), $this->payload(['latitude' => -20, 'longitude' => -40]))->assertRedirect(route('perfil'));
         $user = Usuario::sole();
         $this->assertSame(3, $user->tipo_usuario);
         $this->assertSame('google@example.test', $user->email);
@@ -176,7 +178,7 @@ class GoogleAuthTest extends TestCase
         $origin = $this->user(2);
         $state = $this->begin(['perfil_cadastro' => 'artista', 'orcamento_artista' => $origin->id]);
         $this->identity(); $this->returnFromGoogle($state);
-        $this->post(route('google.store'), $this->payload([
+        $this->cadastrarEConfirmar(route('google.store'), $this->payload([
             'perfil_cadastro' => 'artista', 'orcamento_artista' => 'https://evil.test',
             'compartilhar_localizacao' => 1, 'latitude' => -20, 'longitude' => -40,
         ]))->assertRedirect(route('usuarios.perfilPublico', ['id' => $origin->id]));
@@ -383,7 +385,7 @@ class GoogleAuthTest extends TestCase
         $origin = $this->user(2);
         $state = $this->begin(['orcamento_artista' => $origin->id]);
         $this->identity(); $this->returnFromGoogle($state); $origin->delete();
-        $this->post(route('google.store'), $this->payload(['orcamento_artista' => 'https://evil.test']))->assertRedirect(route('perfil'));
+        $this->cadastrarEConfirmar(route('google.store'), $this->payload(['orcamento_artista' => 'https://evil.test']))->assertRedirect(route('perfil'));
     }
 
     public function test_unique_google_identity_is_not_mass_assignable(): void

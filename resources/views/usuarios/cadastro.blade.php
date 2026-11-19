@@ -28,7 +28,9 @@
     <div class="form-section" id="formulario-login">
         <h1 class="form-title" id="cadastro-titulo" aria-live="polite">{{ $perfilCadastro === 'artista' ? 'Cadastro de artista' : 'Cadastro de cliente' }}</h1>
 
-        @include('Components.form-validation-summary')
+        @unless(isset($emailConfirmacao))
+            @include('Components.form-validation-summary')
+        @endunless
 
         @if(!isset($googleIdentity) && \App\Support\GoogleOAuth::configured())
             <form id="googleRegistrationForm" method="POST" action="{{ route('google.redirect') }}">
@@ -100,6 +102,9 @@
 </main>
 
 @include('Components.footer')
+@isset($emailConfirmacao)
+    @include('usuarios.partials.confirmacao-email')
+@endisset
 
 </body>
 </html>

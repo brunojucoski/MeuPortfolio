@@ -94,6 +94,11 @@ Route::get('/notificacoes', [NotificacaoController::class, 'index'])->middleware
 Route::get('/usuarios/{id}/perfil-publico', [UsuarioController::class, 'showPerfilPublico'])->name('usuarios.perfilPublico');
 
 Route::get('/cadastro', [UsuarioController::class, 'createCadastro'])->name('usuarios.cadastro');
+Route::middleware('guest')->prefix('cadastro/confirmacao')->group(function () {
+    Route::get('/', [UsuarioController::class, 'mostrarConfirmacao'])->name('cadastro.confirmacao');
+    Route::post('/', [UsuarioController::class, 'confirmarCadastro'])->middleware('throttle:30,1')->name('cadastro.confirmar');
+    Route::post('/reenviar', [UsuarioController::class, 'reenviarCodigo'])->name('cadastro.reenviar');
+});
 Route::post('/cadastro', [UsuarioController::class, 'storeCadastro'])->name('usuarios.cadastrar');
 
 Route::get('/cadastro/artista', [UsuarioController::class, 'createArtista'])->name('usuarios.createArtista');

@@ -7,6 +7,8 @@ use Tests\Support\AuthTestCase;
 
 class RegistrationTest extends AuthTestCase
 {
+    use \Tests\Support\ConfirmaCadastro;
+
 
     public function test_registration_screen_can_be_rendered(): void
     {
@@ -17,7 +19,7 @@ class RegistrationTest extends AuthTestCase
 
     public function test_new_users_can_register(): void
     {
-        $response = $this->post('/register', [
+        $response = $this->cadastrarEConfirmar('/register', [
             'nome' => 'Pessoa de teste',
             'email' => 'test@example.com',
             'documento' => '12345678901', 'data_nasc' => '1990-01-01',

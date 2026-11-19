@@ -1,4 +1,17 @@
 /* Form by andrew-demchenk0 on Uiverse.io (MIT); adapted to existing fields. */
+.auth-page dialog.confirmacao-email {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  margin: auto;
+  width: min(420px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  background: white;
+}
+.confirmacao-email::backdrop { background: rgb(16 19 24 / 65%); }
+.confirmacao-email form + form { margin: 12px 0; }
 .auth-page {
   --auth-ink: #323232;
   --auth-muted: #666;

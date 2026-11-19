@@ -14,6 +14,8 @@ use Tests\TestCase;
 
 class AuthFormsDesignTest extends TestCase
 {
+    use \Tests\Support\ConfirmaCadastro;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -26,6 +28,7 @@ class AuthFormsDesignTest extends TestCase
             }
             $table->integer('tipo_usuario');
             $table->date('data_nasc')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
             $table->timestamps();
@@ -170,7 +173,7 @@ class AuthFormsDesignTest extends TestCase
         $payload = $this->registrationPayload(2);
         foreach (['cep', 'bairro', 'endereco', 'latitude', 'longitude', 'compartilhar_localizacao'] as $field) unset($payload[$field]);
         $payload += ['termos_versao' => 'forjada', 'termos_aceitos_em' => '1900-01-01', 'localizacao_autorizada_em' => '1900-01-01'];
-        $this->post(route('usuarios.cadastrar'), $payload)->assertSessionHasNoErrors();
+        $this->cadastrarEConfirmar(route('usuarios.cadastrar'), $payload)->assertSessionHasNoErrors();
         $user = Usuario::firstOrFail();
         $this->assertFalse($user->compartilhar_localizacao);
         $this->assertNull($user->latitude);
@@ -191,7 +194,7 @@ class AuthFormsDesignTest extends TestCase
         $payload['compartilhar_localizacao'] = 0;
         $payload['latitude'] = ['invalid'];
         $payload['longitude'] = 999;
-        $this->post(route('usuarios.cadastrar'), $payload)->assertSessionHasNoErrors();
+        $this->cadastrarEConfirmar(route('usuarios.cadastrar'), $payload)->assertSessionHasNoErrors();
         $this->assertNull(Usuario::firstOrFail()->latitude);
         $this->assertNull(Usuario::firstOrFail()->longitude);
     }
@@ -267,7 +270,7 @@ class AuthFormsDesignTest extends TestCase
 
     private function register(string $route, int $type): void
     {
-        $this->post($route, $this->registrationPayload($type))->assertSessionHasNoErrors()->assertRedirect(route('perfil'));
+        $this->cadastrarEConfirmar($route, $this->registrationPayload($type))->assertSessionHasNoErrors()->assertRedirect(route('perfil'));
         $user = Usuario::firstOrFail();
         $this->assertSame($type, (int) $user->tipo_usuario);
         $this->assertSame('-28.67750000', $user->latitude);
@@ -302,7 +305,7 @@ class AuthFormsDesignTest extends TestCase
         $response = $this->get($url)->assertOk()->assertSee('Cadastro de cliente');
         $xpath = $this->xpath($response->getContent());
         $this->assertSame((string) $artist->id, $xpath->query('//form[@id="form-cadastro"]//input[@name="orcamento_artista" and @type="hidden"]')->item(0)->getAttribute('value'));
-        $this->post(route('usuarios.cadastrar'), $this->registrationPayload() + ['orcamento_artista' => $artist->id])
+        $this->cadastrarEConfirmar(route('usuarios.cadastrar'), $this->registrationPayload() + ['orcamento_artista' => $artist->id])
             ->assertSessionHasNoErrors()->assertSessionHas('success')
             ->assertRedirect(route('usuarios.perfilPublico', ['id' => $artist->id]));
         $requester = Usuario::where('email', 'pessoa@example.test')->firstOrFail();
@@ -320,7 +323,7 @@ class AuthFormsDesignTest extends TestCase
         $response = $this->get(route('usuarios.cadastro'))->assertOk()->assertSee('Cadastro de cliente');
         $this->assertSame((string) $artist->id, $this->xpath($response->getContent())->query('//input[@name="orcamento_artista"]')->item(0)->getAttribute('value'));
         $this->assertGuest();
-        $this->post(route('usuarios.cadastrar'), $this->registrationPayload(2) + ['orcamento_artista' => $artist->id])
+        $this->cadastrarEConfirmar(route('usuarios.cadastrar'), $this->registrationPayload(2) + ['orcamento_artista' => $artist->id])
             ->assertSessionHasNoErrors()->assertRedirect(route('usuarios.perfilPublico', ['id' => $artist->id]));
         $this->assertSame(2, (int) Usuario::where('email', 'pessoa@example.test')->firstOrFail()->tipo_usuario);
     }
@@ -330,7 +333,7 @@ class AuthFormsDesignTest extends TestCase
         $artist = Usuario::create(['nome' => 'Artista de origem', 'tipo_usuario' => 2]);
         $this->get(route('usuarios.cadastro', ['orcamento_artista' => $artist->id]))->assertOk()->assertSee('name="orcamento_artista"', false);
         $this->get(route('usuarios.cadastro'))->assertOk()->assertDontSee('name="orcamento_artista"', false);
-        $this->post(route('usuarios.cadastrar'), $this->registrationPayload())->assertSessionHasNoErrors()->assertRedirect(route('perfil'));
+        $this->cadastrarEConfirmar(route('usuarios.cadastrar'), $this->registrationPayload())->assertSessionHasNoErrors()->assertRedirect(route('perfil'));
     }
 
     public function test_invalid_missing_non_artist_and_deleted_origins_cannot_redirect_registration(): void
@@ -343,7 +346,7 @@ class AuthFormsDesignTest extends TestCase
             $payload = $this->registrationPayload();
             $payload['email'] = 'pessoa' . $index . '@example.test';
             $payload['documento'] = '1234567890' . $index;
-            $this->post(route('usuarios.cadastrar'), $payload + ['orcamento_artista' => $origin])
+            $this->cadastrarEConfirmar(route('usuarios.cadastrar'), $payload + ['orcamento_artista' => $origin])
                 ->assertSessionHasNoErrors()->assertRedirect(route('perfil'));
             $this->assertAuthenticated();
             \Illuminate\Support\Facades\Auth::logout();
@@ -355,7 +358,7 @@ class AuthFormsDesignTest extends TestCase
         $artist = Usuario::create(['nome' => 'Artista de origem', 'tipo_usuario' => 2]);
         $this->get(route('usuarios.cadastro', ['orcamento_artista' => $artist->id]))->assertOk();
         $artist->delete();
-        $this->post(route('usuarios.cadastrar'), $this->registrationPayload() + ['orcamento_artista' => $artist->id])
+        $this->cadastrarEConfirmar(route('usuarios.cadastrar'), $this->registrationPayload() + ['orcamento_artista' => $artist->id])
             ->assertSessionHasNoErrors()->assertRedirect(route('perfil'));
         $this->assertAuthenticated();
     }

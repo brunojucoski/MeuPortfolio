@@ -14,6 +14,9 @@ use App\Models\FeedbackArtista;
 use App\Models\FeedbackContratante;
 use Illuminate\Database\Eloquent\Builder;
 use App\Support\GoogleOAuth;
+use App\Support\ConfirmacaoCadastro;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -149,7 +152,8 @@ class UsuarioController extends Controller
         $artistaOrigemCadastro = $this->artistaOrigemCadastro($request->input('orcamento_artista'));
         $usuario = new Usuario();
         $usuario->fill(\Illuminate\Support\Arr::except($validated, ['senha', 'aceite_termos']));
-        $usuario->compartilhar_localizacao = $request->boolean('compartilhar_localizacao');
+        // String bindings also work for PostgreSQL booleans with emulated prepares.
+        $usuario->compartilhar_localizacao = $request->boolean('compartilhar_localizacao') ? '1' : '0';
         $usuario->latitude = $usuario->compartilhar_localizacao ? $validated['latitude'] : null;
         $usuario->longitude = $usuario->compartilhar_localizacao ? $validated['longitude'] : null;
         $usuario->localizacao_autorizada_em = $usuario->compartilhar_localizacao ? now() : null;
@@ -159,15 +163,68 @@ class UsuarioController extends Controller
         $usuario->tipo_usuario = $tipoUsuario;
         if ($googleIdentity) {
             $usuario->google_id = $googleIdentity['id'];
-            $usuario->email_verified_at = now();
         }
-        DB::transaction(function () use ($usuario) {
-            $usuario->save();
-            $usuario->createToken('token')->plainTextToken;
-        });
+        $confirmacao = app(ConfirmacaoCadastro::class);
+        $pendente = $confirmacao->iniciar($request, $usuario, $artistaOrigemCadastro);
+        $request->session()->forget(GoogleOAuth::PENDING);
+        return $this->enviarCodigoCadastro($request, $confirmacao, $pendente);
+    }
+
+    private function cadastroExpirado()
+    {
+        return redirect()->route('usuarios.cadastro')->withErrors(['cadastro' => 'O cadastro expirou. Preencha o formulário novamente.']);
+    }
+
+    public function mostrarConfirmacao(Request $request, ConfirmacaoCadastro $confirmacao)
+    {
+        $pendente = $confirmacao->pendente($request);
+        if (!$pendente) return $this->cadastroExpirado();
+        return response()->view('usuarios.cadastro', [
+            'perfilCadastro' => $pendente['perfil'],
+            'artistaOrigemCadastro' => $pendente['origem'],
+            'emailConfirmacao' => $pendente['email'],
+            'espera' => $confirmacao->espera($pendente),
+        ])->header('Cache-Control', 'no-store, private');
+    }
+
+    public function reenviarCodigo(Request $request, ConfirmacaoCadastro $confirmacao)
+    {
+        $pendente = $confirmacao->pendente($request);
+        if (!$pendente) return $this->cadastroExpirado();
+        return $this->enviarCodigoCadastro($request, $confirmacao, $pendente);
+    }
+
+    private function enviarCodigoCadastro(Request $request, ConfirmacaoCadastro $confirmacao, array $pendente)
+    {
+        $erro = $confirmacao->enviar($pendente, (string) $request->ip());
+        $retorno = redirect()->route('cadastro.confirmacao');
+        return $erro ? $retorno->withErrors(['envio' => $erro]) : $retorno->with('envio', 'Código enviado. Confira também a pasta de spam.');
+    }
+
+    public function confirmarCadastro(Request $request, ConfirmacaoCadastro $confirmacao)
+    {
+        $pendente = $confirmacao->pendente($request);
+        if (!$pendente) return $this->cadastroExpirado();
+        $codigo = $request->input('codigo');
+        if (!is_string($codigo) || !preg_match('/^[0-9]{6}$/D', $codigo) || !$confirmacao->consumir($pendente, $codigo)) {
+            return redirect()->route('cadastro.confirmacao')->withErrors(['codigo' => 'Código inválido ou expirado. Confira o último e-mail ou solicite outro código.']);
+        }
+        $usuario = new Usuario();
+        $usuario->setRawAttributes(Crypt::decrypt($pendente['dados']));
+        $usuario->email_verified_at = now();
+        $artistaOrigemCadastro = $this->artistaOrigemCadastro($pendente['origem']);
+        try {
+            DB::transaction(function () use ($usuario) {
+                $usuario->save();
+                $usuario->createToken('token');
+            });
+        } catch (UniqueConstraintViolationException $error) {
+            $request->session()->forget(ConfirmacaoCadastro::SESSAO);
+            return redirect()->route('usuarios.cadastro')->withErrors(['cadastro' => 'E-mail ou documento já cadastrado. Entre na sua conta ou revise os dados.']);
+        }
 
         Auth::login($usuario);
-        $request->session()->forget(GoogleOAuth::PENDING);
+        $request->session()->forget(ConfirmacaoCadastro::SESSAO);
         $request->session()->regenerate();
 
         $destino = $artistaOrigemCadastro
