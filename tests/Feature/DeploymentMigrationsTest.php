@@ -89,7 +89,9 @@ class DeploymentMigrationsTest extends TestCase
             'senha' => 'password', 'senha_confirmation' => 'password',
             'perfil_cadastro' => $tipo, 'aceite_termos' => 1,
         ])->assertRedirect(route('perfil'));
-        $this->get(route('perfil'))->assertOk()->assertSee('Perfil de teste');
+        $this->get(route('perfil'))->assertOk()->assertSee('Perfil de teste')
+            ->assertDontSee('perfil-header-rating', false)->assertDontSee('Sem avaliações ainda')
+            ->assertDontSee('Últimas Avaliações');
         $this->getJson('/notificacoes')->assertOk()->assertExactJson([]);
     }
 

@@ -1,6 +1,7 @@
 /* Uiverse adaptations: vinodjangid07/great-ape-33 and sekaiking/tidy-starfish-71.
    MIT attribution: resources/licenses/uiverse-profile-controls.txt. */
 .portfolio-social-links { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 8px 0 16px; }
+.perfil-publico-page .social-icons:has(> *) { margin-block: 1rem; }
 .perfil-publico-page .social-icons .portfolio-social-link {
   position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center;
   width: 45px; height: 45px; flex: 0 0 45px; border: 0; border-radius: 7px;
@@ -39,9 +40,12 @@
 .perfil-publico-page .perfil-orcamento-button:disabled { box-shadow: none !important; }
 @media (max-width: 767.98px) {
   .portfolio-social-links { justify-content: center; }
+  .portfolio-social-links:has(> :nth-child(5)) {
+    max-width: calc(3 * 45px + 2 * 16px);
+    margin-inline: auto;
+  }
   .perfil-header-rating { text-align: center; }
   .perfil-orcamento-actions { justify-content: center; }
   .perfil-publico-page .perfil-orcamento-button { width: min(320px, 100%); }
 }
-@media (max-width: 575.98px) { .portfolio-social-links { max-width: 167px; margin-inline: auto; } }
 @media (prefers-reduced-motion: reduce) { .portfolio-social-link, .portfolio-social-background, .portfolio-social-icon, .portfolio-area-tag, .perfil-orcamento-button { transition: none !important; } .portfolio-social-link:is(:hover,:focus-visible) .portfolio-social-background, .portfolio-area-tag:hover { transform: none; } }

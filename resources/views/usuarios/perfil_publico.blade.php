@@ -181,22 +181,12 @@
                             </div>
                         </div>
 
-                            <div class="social-icons my-3">
+                            <div class="social-icons">
                                 @include('usuarios.partials.social_links')
-                                @if($usuario->tipo_usuario == 2)
-                                {{-- DIV DA MÉDIA DE AVALIAÇÕES --}}
-                                <div class="mt-1 perfil-header-rating">
-                                    @php
-                                        $feedbacks = $feedbacksParaMedia;
-                                        $media = $feedbacks->avg('nota');
-                                    @endphp
-
-                                    @if($media)
-                                        <strong>{{ number_format($media, 1) }}</strong> ⭐ ({{ $feedbacks->count() }} avaliação{{ $feedbacks->count() > 1 ? 's' : '' }})
-                                    @else
-                                        <em>Sem avaliações ainda</em>
-                                    @endif
-                                </div>
+                                @if($usuario->tipo_usuario == 2 && $feedbacksParaMedia->isNotEmpty())
+                                    <div class="mt-1 perfil-header-rating">
+                                        <strong>{{ number_format($feedbacksParaMedia->avg('nota'), 1) }}</strong> ⭐ ({{ $feedbacksParaMedia->count() }} {{ $feedbacksParaMedia->count() === 1 ? 'avaliação' : 'avaliações' }})
+                                    </div>
                                 @endif
                             </div>
 
@@ -446,14 +436,11 @@
     @endif {{-- FIM DA SEÇÃO CONDICIONAL DE PORTFÓLIO --}}
 
 
-    {{-- 3. SEÇÃO DE ÚLTIMAS AVALIAÇÕES (SEMPRE VISÍVEL PARA AMBOS OS TIPOS DE USUÁRIO) --}}
+    @if($feedbacksParaLista->isNotEmpty())
     <section class="container my-5">
         <div class="p-3 align-itens-center text-center">
             <h3 class="text-nome"> Últimas Avaliações </h3>
         </div>
-        @if($feedbacksParaLista->isEmpty())
-            <p class="text-center text-muted">Ainda não há avaliações para este perfil.</p>
-        @else
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 @foreach($feedbacksParaLista as $feedback)
                     <div class="col">
@@ -480,8 +467,8 @@
                     </div>
                 @endforeach
             </div>
-        @endif
     </section>
+    @endif
 
 
     {{-- 4. MODAIS GERAIS  --}}
